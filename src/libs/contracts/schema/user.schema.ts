@@ -4,6 +4,8 @@ import { z } from 'zod';
 const TurkmenistanPhoneNumberRegex = /^\+9936[0-9]{6}$/;
 
 export const UserRegistrationRequestSchema = z.object({
+    firstName: z.string(),
+    secondName: z.string(),
     phoneNumber: z.string().regex(TurkmenistanPhoneNumberRegex, {
         message:
             'Номер телефона должен быть в формате Туркменистана, например, +99361123456',
@@ -25,11 +27,15 @@ export const UserLoginRequestSchema = z.object({
 
 export const UserResponseSchema = z.object({
     id: z.string().uuid(),
+    firstName: z.string(),
+    secondName: z.string(),
     phoneNumber: z.string(),
 });
 
 export const UserTokenResponseSchema = z.object({
     id: z.string().uuid(),
+    firstName: z.string(),
+    secondName: z.string(),
     phoneNumber: z.string(),
     refreshToken: z.string().jwt(),
     accessToken: z.string().jwt(),
@@ -40,6 +46,8 @@ export type TApiUserResponse = z.infer<typeof UserResponseSchema>;
 export class TApiUserAuthTokenResponse extends createZodDto(
     UserTokenResponseSchema.pick({
         id: true,
+        firstName: true,
+        secondName: true,
         phoneNumber: true,
         refreshToken: true,
         accessToken: true,
