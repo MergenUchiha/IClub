@@ -41,8 +41,8 @@ async function bootstrap() {
     // await cacheService.init();
     if (configService.getOrThrow<boolean>('IS_SWAGGER_ENABLED')) {
         const config = new DocumentBuilder()
-            .setTitle('Bazarjyk API')
-            .setDescription('API документация для Bazarjyk')
+            .setTitle('IClub API')
+            .setDescription('API документация для IClub')
             .setVersion('1.0')
             .addBearerAuth()
             .build();

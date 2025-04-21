@@ -15,9 +15,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AllExceptionsFilter } from './utils/core/allException.filter';
 import { HealthModule } from './utils/health/health.module';
 import { LoggerModule } from './utils/logger/logger.module';
-import { ShopModule } from './components/shop/shop.module';
-import { ProductModule } from './components/product/product.module';
-import { AuthModule } from './components/client/auth/auth.module';
 import { MediaModule } from './libs/media/media.module';
 import { TokenModule } from './components/token/token.module';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
@@ -49,9 +46,6 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
         TokenModule,
         MinioModule,
         MediaModule,
-        ShopModule,
-        ProductModule,
-        AuthModule,
     ],
     providers: [
         {
