@@ -1,0 +1,15 @@
+model Shop {
+    id         String    @id() @default(uuid()) @db.Uuid
+    name       String    @unique @db.Text
+    contacts   Json      @db.JsonB
+
+    regionId   String    @db.Uuid
+    region     Region    @relation(fields: [regionId],references: [id])
+    createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamp()
+    updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamp()
+
+    products   Product[]
+    images     Image[]
+
+    @@map("shop")
+}

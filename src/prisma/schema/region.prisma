@@ -1,0 +1,7 @@
+model Region {
+    id      String   @id() @default(uuid()) @db.Uuid
+    name    String   @unique @db.VarChar(25)
+    shops   Shop[]
+
+    @@map("region")
+}
