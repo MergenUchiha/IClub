@@ -1,0 +1,11 @@
+model Product {
+    id          String  @id() @default(uuid()) @db.Uuid
+    name        String  @db.VarChar(25)
+    description String  @db.Text 
+    price       Int     @db.Integer
+
+    shopId      String @db.Uuid @map("shop_id")
+    shop        Shop @relation(fields: [shopId],references: [id],onDelete: Cascade)
+    images      Image[]
+    @@map("product")
+}
