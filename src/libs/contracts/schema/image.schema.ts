@@ -5,7 +5,6 @@ export const ImageCreateRequestSchema = z.object({
     filePath: z.string(),
     mimeType: z.string(),
     size: z.string(),
-    shopId: z.string().optional(),
     productId: z.string().optional(),
 });
 
@@ -17,7 +16,6 @@ export const ImageResponseSchema = z.object({
     mimeType: z.string(),
     size: z.string(),
     createdAt: z.date(),
-    shopId: z.string().optional(),
     productId: z.string().optional(),
 });
 export const ImagesResponseSchema = z.array(ImageResponseSchema);
