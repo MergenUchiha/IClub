@@ -1,0 +1,11 @@
+model Category {
+    id         String    @id() @default(uuid()) @db.Uuid
+    title       String    @unique @db.VarChar(30)
+
+    createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamp()
+    updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamp()
+
+    products   Product[]
+
+    @@map("category")
+}

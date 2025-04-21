@@ -4,8 +4,8 @@ model Product {
     description String  @db.Text 
     price       Int     @db.Integer
 
-    shopId      String @db.Uuid @map("shop_id")
-    shop        Shop @relation(fields: [shopId],references: [id],onDelete: Cascade)
+    categoryId      String @db.Uuid @map("category_id")
+    category        Category @relation(fields: [categoryId],references: [id],onDelete: Cascade)
     images      Image[]
     @@map("product")
 }
