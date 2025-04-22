@@ -11,6 +11,7 @@ import { RedisService } from '../../libs/redis/redis.service';
 import { IS_PUBLIC_KEY } from '../decorators/isPublic.decorator';
 import { IS_USER_KEY } from '../decorators/isUser.decorator';
 import { TokenService } from 'src/components/token/token.service';
+import { IS_ADMIN_KEY } from '../decorators/isAdmin.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -40,6 +41,14 @@ export class AuthGuard implements CanActivate {
 
                 return true;
             }
+            if (this.isAdminRoute(context)) {
+                const adminToken =
+                    this.tokenService.validateAdminAccessToken(token);
+
+                req.currentUser = adminToken;
+
+                return true;
+            }
             return false;
         } catch (e) {
             return this.handleUnauthorized('User unauthorized!');
@@ -55,6 +64,13 @@ export class AuthGuard implements CanActivate {
 
     private isUserRoute(context: ExecutionContext): boolean {
         return this.reflector.getAllAndOverride(IS_USER_KEY, [
+            context.getHandler(),
+            context.getClass(),
+        ]);
+    }
+
+    private isAdminRoute(context: ExecutionContext): boolean {
+        return this.reflector.getAllAndOverride(IS_ADMIN_KEY, [
             context.getHandler(),
             context.getClass(),
         ]);

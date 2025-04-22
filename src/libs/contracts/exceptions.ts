@@ -71,44 +71,32 @@ export class ValidationException extends ApiBaseException {
     }
 }
 
-export class ShopNotFoundException extends ApiBaseException {
+export class CategoryNotFoundException extends ApiBaseException {
     static CODE = 2;
     constructor() {
         super(
-            'Shop not found',
-            ShopNotFoundException.CODE,
+            'Category not found',
+            CategoryNotFoundException.CODE,
             null,
             HttpStatus.NOT_FOUND,
         );
     }
 }
 
-export class ShopNameAlreadyExistsException extends ApiBaseException {
+export class CategoryNameAlreadyExistsException extends ApiBaseException {
     static CODE = 3;
     constructor() {
         super(
-            'Shop name already exists',
-            ShopNotFoundException.CODE,
+            'Category name already exists',
+            CategoryNotFoundException.CODE,
             null,
             HttpStatus.CONFLICT,
         );
     }
 }
 
-export class RegionNotFoundException extends ApiBaseException {
-    static CODE = 4;
-    constructor() {
-        super(
-            'Region not found',
-            RegionNotFoundException.CODE,
-            null,
-            HttpStatus.NOT_FOUND,
-        );
-    }
-}
-
 export class ImageNotFoundException extends ApiBaseException {
-    static CODE = 5;
+    static CODE = 4;
     constructor() {
         super(
             'Image not found',
@@ -120,7 +108,7 @@ export class ImageNotFoundException extends ApiBaseException {
 }
 
 export class ProductNotFoundException extends ApiBaseException {
-    static CODE = 6;
+    static CODE = 5;
     constructor() {
         super(
             'Product not found',
@@ -132,7 +120,7 @@ export class ProductNotFoundException extends ApiBaseException {
 }
 
 export class UserNotFoundException extends ApiBaseException {
-    static CODE = 7;
+    static CODE = 6;
     constructor() {
         super(
             'User not found',
@@ -144,7 +132,7 @@ export class UserNotFoundException extends ApiBaseException {
 }
 
 export class UserPhoneNumberAlreadyExistsException extends ApiBaseException {
-    static CODE = 8;
+    static CODE = 7;
     constructor() {
         super(
             'User phone number already exists',

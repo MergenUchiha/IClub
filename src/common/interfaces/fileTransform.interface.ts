@@ -4,6 +4,5 @@ export interface ITransformedFile {
     mimeType: string;
     size: string;
     originalName: string;
-    shopId?: string;
     productId?: string;
 }

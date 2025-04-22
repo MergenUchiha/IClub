@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const TurkmenistanPhoneNumberRegex = /^\+9936[0-9]{6}$/;
 
-export const UserRegistrationRequestSchema = z.object({
+export const UserCreateRequestSchema = z.object({
     firstName: z.string(),
     secondName: z.string(),
     phoneNumber: z.string().regex(TurkmenistanPhoneNumberRegex, {
@@ -13,8 +13,17 @@ export const UserRegistrationRequestSchema = z.object({
     password: z.string().min(8),
 });
 
-export const UserVerificationRequestSchema = z.object({
-    code: z.string().min(6),
+export const UserUpdateRequestSchema = z.object({
+    firstName: z.string().optional(),
+    secondName: z.string().optional(),
+    phoneNumber: z
+        .string()
+        .regex(TurkmenistanPhoneNumberRegex, {
+            message:
+                'Номер телефона должен быть в формате Туркменистана, например, +99361123456',
+        })
+        .optional(),
+    password: z.string().min(8).optional(),
 });
 
 export const UserLoginRequestSchema = z.object({
@@ -41,7 +50,10 @@ export const UserTokenResponseSchema = z.object({
     accessToken: z.string().jwt(),
 });
 
+export const UsersResponseSchema = z.array(UserResponseSchema);
+
 export type TApiUserResponse = z.infer<typeof UserResponseSchema>;
+export type TApiUsersResponse = z.infer<typeof UsersResponseSchema>;
 
 export class TApiUserAuthTokenResponse extends createZodDto(
     UserTokenResponseSchema.pick({
@@ -55,6 +67,8 @@ export class TApiUserAuthTokenResponse extends createZodDto(
 ) {}
 
 export class UserResponseDto extends createZodDto(UserResponseSchema) {}
+export class UsersResponseDto extends createZodDto(UsersResponseSchema) {}
+
 export class UserAuthTokenResponseDto extends createZodDto(
     UserTokenResponseSchema,
 ) {}

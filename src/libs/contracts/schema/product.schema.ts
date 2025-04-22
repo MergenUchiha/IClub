@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ImagesResponseSchema } from './image.schema';
+import { ImageResponseSchema } from './image.schema';
 import { createZodDto } from 'nestjs-zod';
 
 export const ProductCreateRequestSchema = z.object({
@@ -9,8 +9,8 @@ export const ProductCreateRequestSchema = z.object({
 });
 
 export const ProductUpdateRequestSchema = z.object({
-    name: z.string(),
-    price: z.number().positive(),
+    name: z.string().optional(),
+    price: z.number().positive().optional(),
 });
 
 export const ProductResponseSchema = z.object({
@@ -18,7 +18,7 @@ export const ProductResponseSchema = z.object({
     name: z.string(),
     price: z.number().positive(),
     categoryId: z.string().uuid(),
-    images: ImagesResponseSchema.optional(),
+    images: ImageResponseSchema.optional(),
 });
 
 export const ProductsResponseSchema = z.array(ProductResponseSchema);
