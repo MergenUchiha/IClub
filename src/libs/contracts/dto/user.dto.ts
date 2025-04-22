@@ -1,15 +1,11 @@
 import { createZodDto } from 'nestjs-zod';
 import {
     UserLoginRequestSchema,
-    UserRegistrationRequestSchema,
-    UserVerificationRequestSchema,
+    UserCreateRequestSchema,
+    UserUpdateRequestSchema,
 } from '../schema/user.schema';
 
-export class UserRegistrationDto extends createZodDto(
-    UserRegistrationRequestSchema,
-) {}
+export class UserCreateDto extends createZodDto(UserCreateRequestSchema) {}
 
 export class UserLoginDto extends createZodDto(UserLoginRequestSchema) {}
-export class UserVerificationDto extends createZodDto(
-    UserVerificationRequestSchema,
-) {}
+export class UserUpdateDto extends createZodDto(UserUpdateRequestSchema) {}

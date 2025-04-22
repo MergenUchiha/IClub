@@ -1,0 +1,10 @@
+model Admin {
+    id        String    @id @default(uuid()) @db.Uuid
+    username  String    @unique
+    password  String
+    token     Token[]
+    createdAt DateTime? @default(now()) @map("created_at")
+    updatedAt DateTime? @updatedAt @map("updated_at")
+
+    @@map("admin")
+}

@@ -16,13 +16,18 @@ export class SetCookieInterceptor implements NestInterceptor {
         return next.handle().pipe(
             map((data) => {
                 if (data && data.response.refreshToken) {
-                    response.cookie('refreshToken', data.refreshToken, {
-                        maxAge: 30 * 24 * 60 * 60 * 1000,
-                        httpOnly: true,
-                        path: '/',
-                        sameSite: 'Lax',
-                        secure: true,
-                    });
+                    console.log(data.response);
+                    response.cookie(
+                        'refreshToken',
+                        data.response.refreshToken,
+                        {
+                            maxAge: 30 * 24 * 60 * 60 * 1000,
+                            httpOnly: true,
+                            path: '/',
+                            sameSite: 'Lax',
+                            secure: true,
+                        },
+                    );
 
                     const { refreshToken, ...responseBody } = data;
                     return responseBody;

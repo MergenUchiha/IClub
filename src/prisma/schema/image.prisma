@@ -8,7 +8,7 @@ model Image {
   createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamp()
   updatedAt    DateTime? @updatedAt @map("updated_at") @db.Timestamp()
 
-  productId    String? @db.Uuid @map("product_id")
+  productId    String?  @unique @db.Uuid @map("product_id")
   product      Product? @relation(fields: [productId],references: [id],onDelete: Cascade)
 
   @@map("images")

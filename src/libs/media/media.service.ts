@@ -13,23 +13,6 @@ export class MediaService {
         private readonly prismaService: PrismaService,
     ) {}
 
-    async createShopFileMedia(file: ITransformedFile) {
-        const mediaData: CreateImageDto = {
-            originalName: file.originalName,
-            fileName: file.fileName,
-            filePath: file.filePath,
-            mimeType: file.mimeType,
-            size: file.size,
-            shopId: file.shopId,
-        };
-
-        const media = await this.prismaService.image.create({
-            data: { ...mediaData },
-        });
-
-        return media.id;
-    }
-
     async createProductFileMedia(file: ITransformedFile) {
         const mediaData: CreateImageDto = {
             originalName: file.originalName,

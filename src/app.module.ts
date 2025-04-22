@@ -18,6 +18,13 @@ import { LoggerModule } from './utils/logger/logger.module';
 import { MediaModule } from './libs/media/media.module';
 import { TokenModule } from './components/token/token.module';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
+import { CategoryModule } from './components/category/category.module';
+import { ProductModule } from './components/product/product.module';
+import { AdminAuthModule } from './components/auth/admin/admin.auth.module';
+import { DataInitModule } from './components/data-init/data-init.module';
+import { DataInitService } from './components/data-init/data-init.service';
+import { UserModule } from './components/user/user.module';
+import { UserAuthModule } from './components/auth/user/user.auth.module';
 
 @Module({
     imports: [
@@ -46,6 +53,12 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
         TokenModule,
         MinioModule,
         MediaModule,
+        CategoryModule,
+        ProductModule,
+        AdminAuthModule,
+        DataInitModule,
+        UserModule,
+        UserAuthModule,
     ],
     providers: [
         {
@@ -69,6 +82,13 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
             provide: APP_PIPE,
             useClass: ZodValidationPipe,
         },
+        DataInitService,
     ],
 })
-export class AppModule {}
+export class AppModule {
+    constructor(private readonly dataInitService: DataInitService) {}
+    configure() {}
+    async onModuleInit() {
+        await this.dataInitService.onModuleInit();
+    }
+}
