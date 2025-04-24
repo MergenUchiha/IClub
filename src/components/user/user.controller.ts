@@ -21,7 +21,11 @@ import { GetUsersOperation } from './decorator/getUsersOperation.decorator';
 import { GetOneUserOperation } from './decorator/getOneUserOperation.decorator';
 import { UpdateUserOperation } from './decorator/updateUserOperation.decorator';
 import { DeleteUserOperation } from './decorator/deleteUserOperation.decorator';
+import { ADMIN } from 'src/common/decorators/isAdmin.decorator';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
+@ADMIN()
 @Controller('user')
 export class UserController {
     constructor(private userService: UserService) {}

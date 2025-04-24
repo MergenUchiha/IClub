@@ -154,3 +154,75 @@ export class UserWrongPasswordAlreadyExistsException extends ApiBaseException {
         );
     }
 }
+
+export class OrderConflictException extends ApiBaseException {
+    static CODE = 9;
+    constructor() {
+        super(
+            'Can not create an order',
+            OrderConflictException.CODE,
+            null,
+            HttpStatus.CONFLICT,
+        );
+    }
+}
+
+export class OrderNotFoundException extends ApiBaseException {
+    static CODE = 10;
+    constructor() {
+        super(
+            'Order not found',
+            OrderNotFoundException.CODE,
+            null,
+            HttpStatus.NOT_FOUND,
+        );
+    }
+}
+
+export class BookingNotFoundException extends ApiBaseException {
+    static CODE = 11;
+    constructor() {
+        super(
+            'Booking not found',
+            BookingNotFoundException.CODE,
+            null,
+            HttpStatus.NOT_FOUND,
+        );
+    }
+}
+
+export class BookingDateExistenceException extends ApiBaseException {
+    static CODE = 12;
+    constructor() {
+        super(
+            'Booking already exists,please add details',
+            BookingDateExistenceException.CODE,
+            null,
+            HttpStatus.CONFLICT,
+        );
+    }
+}
+
+export class BookingDetailNotFoundException extends ApiBaseException {
+    static CODE = 13;
+    constructor() {
+        super(
+            'Booking detail not found',
+            BookingDetailNotFoundException.CODE,
+            null,
+            HttpStatus.NOT_FOUND,
+        );
+    }
+}
+
+export class LessonExistingConflictException extends ApiBaseException {
+    static CODE = 14;
+    constructor() {
+        super(
+            'Lesson or place already booked,please choose another lesson or place',
+            LessonExistingConflictException.CODE,
+            null,
+            HttpStatus.CONFLICT,
+        );
+    }
+}

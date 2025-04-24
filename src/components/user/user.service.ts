@@ -38,9 +38,9 @@ export class UserService {
     async getUsers() // query: PageDto,
     : Promise<TApiResp<TApiUsersResponse>> {
         // const { page = 1, take = 5, q = '' } = query;
-        const users = await this.prisma.category.findMany({
+        const users = await this.prisma.user.findMany({
             // where: { title: { contains: q } },
-            orderBy: { title: 'asc' },
+            orderBy: { createdAt: 'asc' },
             // take,
             // skip: (page - 1) * take,
         });

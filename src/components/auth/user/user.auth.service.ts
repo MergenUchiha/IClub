@@ -38,7 +38,14 @@ export class UserAuthService {
 
         return {
             good: true,
-            response: { ...tokens, ...user },
+            response: {
+                accessToken: tokens.accessToken,
+                refreshToken: tokens.refreshToken,
+                id: user.id,
+                firstName: user.firstName,
+                secondName: user.secondName,
+                phoneNumber: user.phoneNumber,
+            },
         };
     }
 
@@ -63,7 +70,14 @@ export class UserAuthService {
         await this.tokenService.saveTokens(user.id, tokens.refreshToken);
         return {
             good: true,
-            response: { ...tokens, ...user },
+            response: {
+                accessToken: tokens.accessToken,
+                refreshToken: tokens.refreshToken,
+                id: user.id,
+                firstName: user.firstName,
+                secondName: user.secondName,
+                phoneNumber: user.phoneNumber,
+            },
         };
     }
 

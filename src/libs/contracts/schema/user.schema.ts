@@ -39,6 +39,8 @@ export const UserResponseSchema = z.object({
     firstName: z.string(),
     secondName: z.string(),
     phoneNumber: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
 });
 
 export const UserTokenResponseSchema = z.object({

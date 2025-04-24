@@ -4,3 +4,7 @@ export * from './category.dto';
 export * from './page.dto';
 export * from './image.dto';
 export * from './admin.dto';
+export * from './order.dto';
+export * from './orderItem.dto';
+export * from './detail.dto';
+export * from './booking.dto';

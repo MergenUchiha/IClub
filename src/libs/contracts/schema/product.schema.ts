@@ -4,20 +4,22 @@ import { createZodDto } from 'nestjs-zod';
 
 export const ProductCreateRequestSchema = z.object({
     name: z.string(),
+    description: z.string(),
     price: z.number().positive(),
     categoryId: z.string().uuid(),
 });
 
 export const ProductUpdateRequestSchema = z.object({
     name: z.string().optional(),
+    description: z.string(),
     price: z.number().positive().optional(),
 });
 
 export const ProductResponseSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
+    description: z.string(),
     price: z.number().positive(),
-    categoryId: z.string().uuid(),
     images: ImageResponseSchema.optional(),
 });
 
