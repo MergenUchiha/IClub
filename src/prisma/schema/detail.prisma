@@ -1,0 +1,15 @@
+model Detail {
+    id              String    @id @default(uuid()) @db.Uuid
+    lesson          Lesson
+    group           String
+    teacher         String
+    phoneNumber     String    @map("phone_number")
+
+    bookingId       String    @unique @db.Uuid   @map("booking_id")
+    booking         Booking   @relation(fields: [bookingId],references: [id],onDelete: Cascade)
+    createdAt       DateTime? @default(now()) @map("created_at")
+    updatedAt       DateTime? @updatedAt @map("updated_at")
+
+
+    @@map("detail")
+}

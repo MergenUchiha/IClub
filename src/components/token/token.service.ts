@@ -20,7 +20,7 @@ export class TokenService {
 
     generateTokens(payload: UserTokenDto) {
         const accessExpiresIn = parseInt(
-            this.configService.getOrThrow<string>('JWT_ACCESS_TIME'),
+            this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
             10,
         );
 
@@ -149,7 +149,7 @@ export class TokenService {
 
     generateAdminTokens(payload: AdminTokenDto) {
         const accessExpiresIn = parseInt(
-            this.configService.getOrThrow<string>('JWT_ACCESS_TIME'),
+            this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
             10,
         );
 

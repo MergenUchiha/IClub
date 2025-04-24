@@ -1,0 +1,11 @@
+model OrderItem {
+  id          String  @id() @default(uuid()) @db.Uuid
+  quantity    Int  
+  price       Float
+  
+  productId   String  @map("productId") @db.Uuid
+  orderId     String  @map("orderId") @db.Uuid
+  order      Order @relation(fields: [orderId],references: [id],onDelete: Cascade)
+
+  @@map("order_item")
+}

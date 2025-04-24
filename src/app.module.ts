@@ -25,6 +25,8 @@ import { DataInitModule } from './components/data-init/data-init.module';
 import { DataInitService } from './components/data-init/data-init.service';
 import { UserModule } from './components/user/user.module';
 import { UserAuthModule } from './components/auth/user/user.auth.module';
+import { OrderModule } from './components/order/order.module';
+import { BookingModule } from './components/booking/booking.module';
 
 @Module({
     imports: [
@@ -59,6 +61,8 @@ import { UserAuthModule } from './components/auth/user/user.auth.module';
         DataInitModule,
         UserModule,
         UserAuthModule,
+        OrderModule,
+        BookingModule,
     ],
     providers: [
         {

@@ -5,6 +5,7 @@ model User {
     phoneNumber  String    @unique @map("phone_number")
     password     String    @db.VarChar()
 
+    orders       Order[]
     createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamp()
     updatedAt    DateTime? @updatedAt @map("updated_at") @db.Timestamp()
     token        Token?
