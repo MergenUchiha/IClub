@@ -3,6 +3,7 @@ import { Image } from '@prisma/client';
 import { ITransformedFile } from 'src/common/interfaces/fileTransform.interface';
 import {
     CreateProductDto,
+    PageDto,
     // PageDto,
     ProductResponseSchema,
     ProductsResponseSchema,
@@ -44,13 +45,13 @@ export class ProductService {
         };
     }
 
-    async getProducts(): Promise<TApiResp<TApiProductsResponse>> {
-        // const { page = 1, take = 5, q } = query;
+    async getProducts(query: PageDto): Promise<TApiResp<TApiProductsResponse>> {
+        const { page = 1, take = 5, q = '', order = 'desc' } = query;
         const products = await this.prisma.product.findMany({
-            // where: { name: { contains: q } },
-            orderBy: { name: 'asc' },
-            // take,
-            // skip: (page - 1) * take,
+            where: { name: { contains: q } },
+            orderBy: { name: order },
+            take,
+            skip: (page - 1) * take,
             include: { image: true },
         });
         const parsed = ProductsResponseSchema.parse(products);

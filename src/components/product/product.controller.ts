@@ -7,11 +7,13 @@ import {
     ParseUUIDPipe,
     Patch,
     Post,
+    Query,
     UploadedFile,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import {
     CreateProductDto,
+    PageDto,
     TApiProductResponse,
     TApiProductsResponse,
     UpdateProductDto,
@@ -43,9 +45,10 @@ export class ProductController {
 
     @GetProductsOperation()
     @Get()
-    async getProducts() // @Query() query: PageDto,
-    : Promise<TApiResp<TApiProductsResponse>> {
-        return this.productService.getProducts();
+    async getProducts(
+        @Query() query: PageDto,
+    ): Promise<TApiResp<TApiProductsResponse>> {
+        return this.productService.getProducts(query);
     }
 
     @GetOneProductOperation()

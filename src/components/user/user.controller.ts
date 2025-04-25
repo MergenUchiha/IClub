@@ -7,9 +7,11 @@ import {
     ParseUUIDPipe,
     Patch,
     Post,
+    Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
+    PageDto,
     TApiUserResponse,
     TApiUsersResponse,
     UserCreateDto,
@@ -40,9 +42,10 @@ export class UserController {
 
     @GetUsersOperation()
     @Get()
-    async getUsers() // @Query() query: PageDto,
-    : Promise<TApiResp<TApiUsersResponse>> {
-        return await this.userService.getUsers();
+    async getUsers(
+        @Query() query: PageDto,
+    ): Promise<TApiResp<TApiUsersResponse>> {
+        return await this.userService.getUsers(query);
     }
 
     @GetOneUserOperation()
