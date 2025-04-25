@@ -6,6 +6,7 @@ export const PageSchema = z.object({
     take: z
         .enum(['5', '10', '20', '30', '50', '100'])
         .default('5')
-        .transform((val) => Number(val)),
+        .transform((val) => Number(val))
+        .optional(),
     q: z.string().optional(),
 });
