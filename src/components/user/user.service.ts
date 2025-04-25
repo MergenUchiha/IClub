@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { generateHash } from 'src/helpers/providers/generateHash';
 import {
+    PageDto,
     TApiUserResponse,
     TApiUsersResponse,
     UserCreateDto,
@@ -35,14 +36,13 @@ export class UserService {
         return { good: true, response: parsed };
     }
 
-    async getUsers() // query: PageDto,
-    : Promise<TApiResp<TApiUsersResponse>> {
-        // const { page = 1, take = 5, q = '' } = query;
+    async getUsers(query: PageDto): Promise<TApiResp<TApiUsersResponse>> {
+        const { page = 1, take = 5, q = '', order = 'desc' } = query;
         const users = await this.prisma.user.findMany({
-            // where: { title: { contains: q } },
-            orderBy: { createdAt: 'asc' },
-            // take,
-            // skip: (page - 1) * take,
+            where: { phoneNumber: { contains: q } },
+            orderBy: { createdAt: order },
+            take,
+            skip: (page - 1) * take,
         });
         const parsed = UsersResponseSchema.parse(users);
         return { good: true, response: parsed };

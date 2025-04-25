@@ -6,7 +6,6 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { RedisService } from '../../libs/redis/redis.service';
 import { IS_PUBLIC_KEY } from '../decorators/isPublic.decorator';
 import { IS_USER_KEY } from '../decorators/isUser.decorator';
 import { TokenService } from 'src/components/token/token.service';
@@ -18,7 +17,6 @@ export class AuthGuard implements CanActivate {
 
     constructor(
         private reflector: Reflector,
-        private redisService: RedisService,
         private tokenService: TokenService,
     ) {}
 
