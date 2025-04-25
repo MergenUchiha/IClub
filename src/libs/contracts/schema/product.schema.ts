@@ -11,8 +11,9 @@ export const ProductCreateRequestSchema = z.object({
 
 export const ProductUpdateRequestSchema = z.object({
     name: z.string().optional(),
-    description: z.string(),
+    description: z.string().optional(),
     price: z.number().positive().optional(),
+    categoryId: z.string().uuid().optional(),
 });
 
 export const ProductResponseSchema = z.object({
@@ -20,6 +21,7 @@ export const ProductResponseSchema = z.object({
     name: z.string(),
     description: z.string(),
     price: z.number().positive(),
+    categoryId: z.string().uuid(),
     images: ImageResponseSchema.optional(),
 });
 
