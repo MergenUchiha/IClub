@@ -12,12 +12,10 @@ import {
 import { patchNestJsSwagger, ZodValidationPipe } from 'nestjs-zod';
 import 'reflect-metadata';
 import { AppModule } from './app.module';
-// import { CacheService } from './cache/cache.service';
 import './instrument';
 import { LoggerService } from './utils/logger/logger.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import fastifyCors from '@fastify/cors';
-// import compression from 'compression';
 
 async function bootstrap() {
     patchNestJsSwagger();
@@ -33,8 +31,6 @@ async function bootstrap() {
     app.useLogger(logger);
 
     const configService = app.get(ConfigService);
-
-    // const cacheService = app.get(CacheService);
 
     const port = configService.getOrThrow<number>('PORT');
 
