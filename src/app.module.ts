@@ -1,5 +1,3 @@
-// import KeyvRedis from '@keyv/redis';
-// import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
@@ -10,7 +8,6 @@ import { LoggingInterceptor } from './common/interceptors/logger.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { validateEnv } from './config/env.validation';
 import { MinioModule } from './libs/minio/minio.module';
-import { RedisModule } from './libs/redis/redis.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AllExceptionsFilter } from './utils/core/allException.filter';
 import { HealthModule } from './utils/health/health.module';
@@ -37,21 +34,10 @@ import { BookingModule } from './components/booking/booking.module';
             isGlobal: true,
             cache: true,
         }),
-        // CacheModule.registerAsync({
-        //     inject: [ConfigService],
-        //     useFactory: async (configService: ConfigService) => {
-        //         return {
-        //             stores: [
-        //                 new KeyvRedis(configService.getOrThrow('REDIS_URL')),
-        //             ],
-        //         };
-        //     },
-        // }),
         TerminusModule.forRoot(),
         LoggerModule,
         HealthModule,
         PrismaModule,
-        RedisModule,
         TokenModule,
         MinioModule,
         MediaModule,

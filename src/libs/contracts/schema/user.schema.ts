@@ -1,7 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
-const TurkmenistanPhoneNumberRegex = /^\+9936[0-9]{6}$/;
+const TurkmenistanPhoneNumberRegex = /^\+9936[0-9]{7}$/;
 
 export const UserCreateRequestSchema = z.object({
     firstName: z.string(),
