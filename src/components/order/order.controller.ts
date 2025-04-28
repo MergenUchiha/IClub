@@ -8,7 +8,7 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { CreateOrderDto } from 'src/libs/contracts';
+import { CreateOrderDto, UpdateOrderDto } from 'src/libs/contracts';
 import { UserTokenDto } from '../token/dto/userToken.dto';
 import { TApiOrderResponse, TApiOrdersResponse } from 'src/libs/contracts';
 import { TApiResp } from 'src/libs/contracts/interface';
@@ -52,9 +52,12 @@ export class OrderController {
     }
 
     @UpdateOrderOperation()
-    @Patch(':id/verify')
-    async updateOrder(@Param('id') orderId: string): Promise<TApiResp<true>> {
-        return this.orderService.updateOrder(orderId);
+    @Patch(':id')
+    async updateOrder(
+        @Param('id') orderId: string,
+        @Body() dto: UpdateOrderDto,
+    ): Promise<TApiResp<true>> {
+        return this.orderService.updateOrder(orderId, dto);
     }
 
     @GetOneOrderOperation()
