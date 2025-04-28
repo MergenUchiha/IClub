@@ -1,6 +1,7 @@
 export type TApiRespGood<T> = {
     good: true;
     response?: T;
+    count?: number;
 };
 
 export type TApiRespBad = {

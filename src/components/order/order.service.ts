@@ -41,6 +41,7 @@ export class OrderService {
                     data: {
                         status: 'PENDING', // Use dto.status or default to PENDING
                         totalPrice: total,
+                        description: dto.description,
                         userId: user.id,
                     },
                 });
@@ -110,6 +111,7 @@ export class OrderService {
         await this.prisma.order.update({
             where: { id: orderId },
             data: {
+                description: dto.description,
                 status: dto.status,
             },
         });
@@ -163,10 +165,12 @@ export class OrderService {
                 user: true,
             },
         });
+        const count = await this.prisma.order.count();
         const parsed = OrdersResponseSchema.parse(orders);
         return {
             good: true,
             response: parsed,
+            count: count,
         };
     }
 
@@ -190,10 +194,12 @@ export class OrderService {
                 user: true,
             },
         });
+        const count = await this.prisma.order.count();
         const parsed = OrdersResponseSchema.parse(orders);
         return {
             good: true,
             response: parsed,
+            count: count,
         };
     }
 

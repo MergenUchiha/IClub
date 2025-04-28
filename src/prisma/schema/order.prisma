@@ -1,6 +1,7 @@
 model Order {
      id          String  @id() @default(uuid()) @db.Uuid
      totalPrice  Float   @map("total_price")
+     description String?  @db.Text
      status      Status  
 
      userId      String @db.Uuid @map("user_id")
