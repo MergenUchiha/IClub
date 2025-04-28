@@ -7,6 +7,7 @@ import {
     PageDto,
     TApiOrderResponse,
     TApiOrdersResponse,
+    UpdateOrderDto,
 } from 'src/libs/contracts';
 import { UserTokenDto } from '../token/dto/userToken.dto';
 import {
@@ -98,15 +99,18 @@ export class OrderService {
         };
     }
 
-    async updateOrder(orderId: string): Promise<TApiResp<true>> {
+    async updateOrder(
+        orderId: string,
+        dto: UpdateOrderDto,
+    ): Promise<TApiResp<true>> {
         const order = await this.findOrderById(orderId);
-        if (order.status === 'CANCELLED') {
+        if (order.status === 'CANCELLED' || order.status === 'VERIFIED') {
             throw new OrderConflictException();
         }
         await this.prisma.order.update({
             where: { id: orderId },
             data: {
-                status: 'VERIFIED',
+                status: dto.status,
             },
         });
         return {
