@@ -114,7 +114,7 @@ export class OrderService {
     async getOneOrder(orderId: string): Promise<TApiResp<TApiOrderResponse>> {
         const order = await this.prisma.order.findUnique({
             where: { id: orderId },
-            include: { orderItems: true },
+            include: { orderItems: true, user: true },
         });
         if (!order) {
             throw new OrderNotFoundException();
@@ -131,7 +131,7 @@ export class OrderService {
 
         const order = await this.prisma.order.findUnique({
             where: { id: orderId, userId: user.id },
-            include: { orderItems: true },
+            include: { orderItems: true, user: true },
         });
         if (!order) {
             throw new OrderNotFoundException();
@@ -150,6 +150,7 @@ export class OrderService {
                         product: { select: { name: true } },
                     },
                 },
+                user: true,
             },
         });
         const parsed = OrdersResponseSchema.parse(orders);
@@ -172,6 +173,7 @@ export class OrderService {
                         product: { select: { name: true } },
                     },
                 },
+                user: true,
             },
         });
         const parsed = OrdersResponseSchema.parse(orders);

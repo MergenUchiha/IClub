@@ -14,11 +14,9 @@ export const OrderItemUpdateRequestSchema = z.object({
 
 export const OrderItemResponseSchema = z.object({
     id: z.string().uuid(),
-    productId: z.string().uuid(),
     quantity: z.number().positive(),
     price: z.number().positive(),
     product: ProductForOrderResponse.optional(),
-    orderId: z.string().uuid(),
 });
 
 export const OrderItemsCreateSchema = z.array(OrderItemCreateRequestSchema);
