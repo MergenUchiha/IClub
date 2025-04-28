@@ -5,10 +5,11 @@ import {
     Param,
     Patch,
     Post,
+    Query,
     UnauthorizedException,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { CreateOrderDto, UpdateOrderDto } from 'src/libs/contracts';
+import { CreateOrderDto, PageDto, UpdateOrderDto } from 'src/libs/contracts';
 import { UserTokenDto } from '../token/dto/userToken.dto';
 import { TApiOrderResponse, TApiOrdersResponse } from 'src/libs/contracts';
 import { TApiResp } from 'src/libs/contracts/interface';
@@ -82,18 +83,21 @@ export class OrderController {
 
     @GetOrdersOperation()
     @Get()
-    async getOrders(): Promise<TApiResp<TApiOrdersResponse>> {
-        return this.orderService.getOrders();
+    async getOrders(
+        @Query() query: PageDto,
+    ): Promise<TApiResp<TApiOrdersResponse>> {
+        return this.orderService.getOrders(query);
     }
 
     @GetMyOrdersOperation()
     @Get('my')
     async getMyOrders(
         @CurrentUser() user: UserTokenDto,
+        @Query() query: PageDto,
     ): Promise<TApiResp<TApiOrdersResponse>> {
         if (!user) {
             throw new UnauthorizedException();
         }
-        return this.orderService.getMyOrders(user);
+        return this.orderService.getMyOrders(user, query);
     }
 }
