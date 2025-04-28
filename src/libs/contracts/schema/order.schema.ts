@@ -4,6 +4,7 @@ import {
     OrderItemsCreateSchema,
     OrderItemsResponseSchema,
 } from './orderItem.schema';
+import { UserResponseSchema } from './user.schema';
 
 enum Status {
     PENDING = 'PENDING',
@@ -23,7 +24,7 @@ export const OrderResponseSchema = z.object({
     id: z.string().uuid(),
     status: z.enum([Status.PENDING, Status.VERIFIED, Status.CANCELLED]),
     totalPrice: z.number().positive(),
-    userId: z.string().uuid(),
+    user: UserResponseSchema,
     orderItems: OrderItemsResponseSchema.nonempty(),
     createdAt: z.date(),
     updatedAt: z.date(),
