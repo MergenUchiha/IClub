@@ -4,6 +4,7 @@ import {
     CreateOrderDto,
     OrderResponseSchema,
     OrdersResponseSchema,
+    PageDto,
     TApiOrderResponse,
     TApiOrdersResponse,
 } from 'src/libs/contracts';
@@ -34,17 +35,16 @@ export class OrderService {
                 throw new OrderConflictException();
             }
 
-            const order = await this.prisma.$transaction(async (prisma) => {
+            return await this.prisma.$transaction(async (prisma) => {
                 const createdOrder = await prisma.order.create({
                     data: {
                         status: 'PENDING', // Use dto.status or default to PENDING
                         totalPrice: total,
                         userId: user.id,
                     },
-                    include: { orderItems: true },
                 });
 
-                const orderItems = await Promise.all(
+                await Promise.all(
                     dto.orderItems.map((item) =>
                         prisma.orderItem.create({
                             data: {
@@ -56,15 +56,18 @@ export class OrderService {
                         }),
                     ),
                 );
-
-                return {
-                    ...createdOrder,
-                    orderItems,
-                };
+                const order = await prisma.order.findUnique({
+                    where: { id: createdOrder.id },
+                    include: {
+                        orderItems: {
+                            include: { product: { select: { name: true } } },
+                        },
+                        user: true,
+                    },
+                });
+                const parsed = OrderResponseSchema.parse(order);
+                return { good: true, response: parsed };
             });
-
-            const parsed = OrderResponseSchema.parse(order);
-            return { good: true, response: parsed };
         } catch {
             throw new OrderConflictException();
         }
@@ -141,9 +144,12 @@ export class OrderService {
         return { good: true, response: parsed };
     }
 
-    async getOrders(): Promise<TApiResp<TApiOrdersResponse>> {
+    async getOrders(query: PageDto): Promise<TApiResp<TApiOrdersResponse>> {
+        const { page = 1, take = 5, order = 'desc' } = query;
         const orders = await this.prisma.order.findMany({
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: order },
+            take,
+            skip: (page - 1) * take,
             include: {
                 orderItems: {
                     include: {
@@ -162,11 +168,15 @@ export class OrderService {
 
     async getMyOrders(
         currentUser: UserTokenDto,
+        query: PageDto,
     ): Promise<TApiResp<TApiOrdersResponse>> {
+        const { page = 1, take = 5, order = 'desc' } = query;
         const user = await this.findUserById(currentUser.id);
         const orders = await this.prisma.order.findMany({
             where: { userId: user.id },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: order },
+            take,
+            skip: (page - 1) * take,
             include: {
                 orderItems: {
                     include: {
