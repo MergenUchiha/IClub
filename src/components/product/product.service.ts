@@ -4,7 +4,6 @@ import { ITransformedFile } from 'src/common/interfaces/fileTransform.interface'
 import {
     CreateProductDto,
     PageDto,
-    // PageDto,
     ProductResponseSchema,
     ProductsResponseSchema,
     TApiProductResponse,
@@ -54,8 +53,9 @@ export class ProductService {
             skip: (page - 1) * take,
             include: { image: true },
         });
+        const count = await this.prisma.product.count();
         const parsed = ProductsResponseSchema.parse(products);
-        return { good: true, response: parsed };
+        return { good: true, response: parsed, count: count };
     }
 
     async getOneProduct(

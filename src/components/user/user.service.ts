@@ -44,8 +44,9 @@ export class UserService {
             take,
             skip: (page - 1) * take,
         });
+        const count = await this.prisma.user.count();
         const parsed = UsersResponseSchema.parse(users);
-        return { good: true, response: parsed };
+        return { good: true, response: parsed, count: count };
     }
 
     async getOneUser(userId: string): Promise<TApiResp<TApiUserResponse>> {

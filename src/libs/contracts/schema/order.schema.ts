@@ -7,16 +7,19 @@ import {
 import { UserResponseSchema } from './user.schema';
 
 export const OrderCreateRequestSchema = z.object({
+    description: z.string().optional(),
     orderItems: OrderItemsCreateSchema.nonempty(),
 });
 
 export const OrderUpdateRequestSchema = z.object({
+    description: z.string().optional(),
     status: z.enum(['PENDING', 'VERIFIED', 'CANCELLED']).optional(),
 });
 
 export const OrderResponseSchema = z.object({
     id: z.string().uuid(),
     status: z.enum(['PENDING', 'VERIFIED', 'CANCELLED']),
+    description: z.string().optional(),
     totalPrice: z.number().positive(),
     user: UserResponseSchema,
     orderItems: OrderItemsResponseSchema.nonempty(),
