@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
+import { ProductForOrderResponse } from './product.schema';
 
 export const OrderItemCreateRequestSchema = z.object({
     productId: z.string().uuid(),
@@ -16,6 +17,7 @@ export const OrderItemResponseSchema = z.object({
     productId: z.string().uuid(),
     quantity: z.number().positive(),
     price: z.number().positive(),
+    product: ProductForOrderResponse.optional(),
     orderId: z.string().uuid(),
 });
 
