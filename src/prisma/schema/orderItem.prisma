@@ -4,8 +4,9 @@ model OrderItem {
   price       Float
   
   productId   String  @map("productId") @db.Uuid
+  product     Product @relation(fields: [productId],references: [id])
   orderId     String  @map("orderId") @db.Uuid
-  order      Order @relation(fields: [orderId],references: [id],onDelete: Cascade)
+  order       Order @relation(fields: [orderId],references: [id],onDelete: Cascade)
 
   @@map("order_item")
 }

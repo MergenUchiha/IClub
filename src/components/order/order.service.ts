@@ -144,7 +144,13 @@ export class OrderService {
     async getOrders(): Promise<TApiResp<TApiOrdersResponse>> {
         const orders = await this.prisma.order.findMany({
             orderBy: { createdAt: 'desc' },
-            include: { orderItems: true },
+            include: {
+                orderItems: {
+                    include: {
+                        product: { select: { name: true } },
+                    },
+                },
+            },
         });
         const parsed = OrdersResponseSchema.parse(orders);
         return {
@@ -160,7 +166,13 @@ export class OrderService {
         const orders = await this.prisma.order.findMany({
             where: { userId: user.id },
             orderBy: { createdAt: 'desc' },
-            include: { orderItems: true },
+            include: {
+                orderItems: {
+                    include: {
+                        product: { select: { name: true } },
+                    },
+                },
+            },
         });
         const parsed = OrdersResponseSchema.parse(orders);
         return {

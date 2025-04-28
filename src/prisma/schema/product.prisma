@@ -6,6 +6,7 @@ model Product {
 
     categoryId  String @db.Uuid @map("category_id")
     category    Category @relation(fields: [categoryId],references: [id],onDelete: Cascade)
+    orderItems  OrderItem[]
     image       Image?
     @@map("product")
 }

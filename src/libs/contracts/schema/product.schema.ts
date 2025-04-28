@@ -25,6 +25,10 @@ export const ProductResponseSchema = z.object({
     images: ImageResponseSchema.optional(),
 });
 
+export const ProductForOrderResponse = z.object({
+    name: z.string(),
+});
+
 export const ProductsResponseSchema = z.array(ProductResponseSchema);
 
 export type TApiProductResponse = z.infer<typeof ProductResponseSchema>;
