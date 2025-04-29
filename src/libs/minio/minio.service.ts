@@ -92,42 +92,40 @@ export class MinioService implements OnModuleInit {
         fileSize: number,
         mimeType: string,
     ) {
-        try {
-            const metaData = {
-                'Content-Type': mimeType,
-            };
-            const uploadedFile = await this.minioClient.putObject(
-                this.bucketName,
-                fileName,
-                fileStream,
-                fileSize,
-                metaData,
-            );
+        console.log('IN MINIO', this.minioClient);
 
-            this.logger.log(`Uploaded file: ${fileName}`);
-            return uploadedFile;
-        } catch (err) {
-            console.log(err);
-        }
+        const metaData = {
+            'Content-Type': mimeType,
+        };
+        const uploadedFile = await this.minioClient.putObject(
+            this.bucketName,
+
+            fileName,
+            fileStream,
+            fileSize,
+            metaData,
+        );
+
+        this.logger.log(`Uploaded file: ${fileName}`);
+        return uploadedFile;
     }
 
-    getFileUrl(fileName: string) {
-        try {
-            const endpoint =
-                this.configService.getOrThrow<string>('MINIO_ENDPOINT');
-            const bucketName =
-                this.configService.getOrThrow<string>('MINIO_BUCKET_NAME');
+    async getFileUrl(fileName: string) {
+        const url = await this.minioClient.presignedUrl(
+            'GET',
+            this.bucketName,
+            fileName,
+        );
 
-            const minioBaseUrl = endpoint.replace(/\/$/, '');
-            const publicUrl = `${minioBaseUrl}/${bucketName}/${fileName}`;
+        this.logger.log(`Retrieved file URL: ${url}`);
 
-            this.logger.log(`Public file URL: ${publicUrl}`);
-
-            return publicUrl;
-        } catch (err: any) {
-            this.logger.error(`Error generating file URL: ${err.message}`);
-            throw err;
+        if (process.env.NODE_ENV === 'development') {
+            return url;
         }
+        return url.replace(
+            this.configService.getOrThrow<'string'>('MINIO_ENDPOINT'),
+            this.configService.getOrThrow<'string'>('MINIO_HOST'),
+        );
     }
 
     async deleteFile(fileName: string) {

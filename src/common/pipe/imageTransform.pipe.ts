@@ -30,7 +30,7 @@ export class ImageTransformer implements PipeTransform<Express.Multer.File> {
             transformedFile = {
                 fileName: file.filename,
                 originalName: file.originalname,
-                filePath: this.minioService.getFileUrl(file.filename),
+                filePath: await this.minioService.getFileUrl(file.filename),
                 mimeType: file.mimetype,
                 size: file.size.toString(),
             };
