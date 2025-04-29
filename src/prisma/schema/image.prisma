@@ -1,7 +1,7 @@
 model Image {
   id           String    @id() @default(uuid()) @db.Uuid
   fileName     String    @map("file_name") @db.VarChar(255)
-  filePath     String    @map("file_path") @db.VarChar(255)
+  filePath     String    @map("file_path") @db.Text
   size         String    @db.VarChar(255)
   mimeType     String    @map("mime_type") @db.VarChar(255)
   originalName String    @map("original_name") @db.VarChar(255)
