@@ -3,30 +3,16 @@ import {
     UnsupportedMediaTypeException,
 } from '@nestjs/common';
 
-type validFileExtension = 'png' | 'jpg' | 'jpeg' | 'webp';
-type validMimeType = 'image/png' | 'image/jpg' | 'image/jpeg' | 'image/webp';
-
-const validMimeTypes: validMimeType[] = [
-    'image/png',
-    'image/jpg',
-    'image/jpeg',
-    'image/webp',
-];
-
-const validFileExtensions: validFileExtension[] = [
-    'jpeg',
-    'png',
-    'jpg',
-    'webp',
-];
+const validFileExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+const validMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
 
 export function imageFilter(req: any, file: any, cb: any) {
     if (!file) throw new BadRequestException('File not provided!');
     if (
         !validFileExtensions.includes(
-            file.originalname.split('.')[
-                file.originalname.split('.').length - 1
-            ],
+            file.originalname
+                .split('.')
+                [file.originalname.split('.').length - 1].toLowerCase(),
         )
     ) {
         cb(new UnsupportedMediaTypeException('Invalid file extension.'), false);

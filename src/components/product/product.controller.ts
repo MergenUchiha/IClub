@@ -82,14 +82,17 @@ export class ProductController {
         @Param('productId', ParseUUIDPipe) productId: string,
         @UploadedFile(ImageTransformer) file: ITransformedFile,
     ) {
-        return await this.productService.uploadProductImage(productId, file);
+        return await this.productService.createProductFileMedia(
+            productId,
+            file,
+        );
     }
 
     @DeleteProductImageOperation()
     @Delete(':productId/image')
     async deleteProductImage(
         @Param('productId', ParseUUIDPipe) productId: string,
-    ): Promise<TApiResp<true>> {
-        return await this.productService.deleteProductImage(productId);
+    ) {
+        return await this.productService.deleteMedia(productId);
     }
 }
