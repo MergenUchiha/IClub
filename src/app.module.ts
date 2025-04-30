@@ -7,7 +7,6 @@ import { AuthGuard } from './common/guards/auth.guard';
 import { LoggingInterceptor } from './common/interceptors/logger.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { validateEnv } from './config/env.validation';
-import { MinioModule } from './libs/minio/minio.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AllExceptionsFilter } from './utils/core/allException.filter';
 import { HealthModule } from './utils/health/health.module';
@@ -24,6 +23,8 @@ import { UserModule } from './components/user/user.module';
 import { UserAuthModule } from './components/auth/user/user.auth.module';
 import { OrderModule } from './components/order/order.module';
 import { BookingModule } from './components/booking/booking.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
     imports: [
@@ -39,7 +40,6 @@ import { BookingModule } from './components/booking/booking.module';
         HealthModule,
         PrismaModule,
         TokenModule,
-        MinioModule,
         MediaModule,
         CategoryModule,
         ProductModule,
@@ -47,6 +47,10 @@ import { BookingModule } from './components/booking/booking.module';
         DataInitModule,
         UserModule,
         UserAuthModule,
+        ServeStaticModule.forRoot({
+            rootPath: join(__dirname, '..', 'uploads'),
+            serveRoot: '/uploads',
+        }),
         OrderModule,
         BookingModule,
     ],

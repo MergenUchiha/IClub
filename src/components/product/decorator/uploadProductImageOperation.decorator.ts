@@ -1,8 +1,9 @@
 import { applyDecorators, UseInterceptors } from '@nestjs/common';
 import { ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { diskStorage, FileFastifyInterceptor } from 'fastify-file-interceptor';
-import { imageFilter } from 'src/common/filters/imageFilter';
 import { randomUUID } from 'crypto';
+import { join } from 'path';
+import { imageFilter } from 'src/common/filters/imageFilter';
 
 export function UploadProductImageOperation() {
     return applyDecorators(
@@ -12,18 +13,18 @@ export function UploadProductImageOperation() {
             description: 'Product image uploaded',
         }),
         ApiResponse({ status: 404, description: 'Product not found' }),
-        ApiConsumes('product/multipart/form-data'),
+        ApiConsumes('multipart/form-data'),
         UseInterceptors(
             FileFastifyInterceptor('image', {
                 storage: diskStorage({
-                    destination: './temp',
+                    destination: join(process.cwd(), 'Uploads'), // Сохраняем сразу в Uploads
                     filename: (req, file, cb) => {
                         const fileExtension = file.mimetype.split('/')[1];
                         const uniqueFileName = `${randomUUID()}.${fileExtension}`;
                         cb(null, uniqueFileName);
                     },
                 }),
-                limits: { fileSize: 1024 * 1024 * 1500 },
+                limits: { fileSize: 5 * 1024 * 1024 }, // Ограничение 5MB
                 fileFilter: imageFilter,
             }),
         ),

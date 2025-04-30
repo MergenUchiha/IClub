@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { Image } from '@prisma/client';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { join } from 'path';
 import { ITransformedFile } from 'src/common/interfaces/fileTransform.interface';
+import { promises as fs } from 'fs';
 import {
+    CreateImageDto,
     CreateProductDto,
     PageDto,
     ProductResponseSchema,
@@ -18,6 +20,7 @@ import {
 import { TApiResp } from 'src/libs/contracts/interface';
 import { MediaService } from 'src/libs/media/media.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { z } from 'zod';
 
 @Injectable()
 export class ProductService {
@@ -25,6 +28,19 @@ export class ProductService {
         private prisma: PrismaService,
         private mediaService: MediaService,
     ) {}
+    private fileSchema = z.object({
+        originalName: z.string().min(1, 'Original name is required'),
+        fileName: z.string().min(1, 'File name is required'),
+        filePath: z.string().min(1, 'File path is required'),
+        mimeType: z.string().refine((val) => val.startsWith('image/'), {
+            message: 'File must be an image',
+        }),
+        size: z.string().refine((val) => parseInt(val) <= 1500 * 1024 * 1024, {
+            message: 'File size must be less than 1.5GB',
+        }),
+        productId: z.string().uuid().optional(),
+    });
+
     async createProduct(
         dto: CreateProductDto,
     ): Promise<TApiResp<TApiProductResponse>> {
@@ -116,32 +132,53 @@ export class ProductService {
         };
     }
 
-    async uploadProductImage(
-        productId: string,
-        file: ITransformedFile,
-    ): Promise<TApiResp<true>> {
-        await this.findProductById(productId);
+    async createProductFileMedia(productId: string, file: ITransformedFile) {
         file.productId = productId;
-        await this.mediaService.createProductFileMedia(file);
-        return { good: true };
+        // Валидация файла
+        try {
+            this.fileSchema.parse(file);
+        } catch (error) {
+            console.error('Validation failed:', error);
+            throw new BadRequestException(error);
+        }
+
+        const mediaData: CreateImageDto = {
+            originalName: file.originalName,
+            fileName: file.fileName,
+            filePath: file.filePath,
+            mimeType: file.mimeType,
+            size: file.size,
+            productId: file.productId,
+        };
+
+        const media = await this.prisma.image.create({
+            data: mediaData,
+        });
+
+        return media.id;
     }
 
-    async deleteProductImage(productId: string): Promise<TApiResp<true>> {
-        const product = await this.prisma.product.findUnique({
-            where: { id: productId },
-            include: {
-                image: true,
-            },
+    async deleteMedia(productId: string) {
+        console.log(`Удаление медиа с идентификатором продукта: ${productId}`);
+        const file = await this.prisma.image.findFirst({
+            where: { productId: productId },
         });
-        if (!product) {
-            throw new ProductNotFoundException();
+        if (!file) {
+            console.warn(
+                `Медиа с идентификатором продукта ${productId} не найдено!`,
+            );
+            throw new ImageNotFoundException();
         }
-        let image: Image;
-        if (product.image) {
-            image = await this.findImageById(product.image.id);
-            await this.mediaService.deleteMedia(image.id);
-        }
-        return { good: true };
+
+        const filePath = join(__dirname, '..', '..', file.filePath);
+        await fs.unlink(filePath).catch((err) => {
+            console.warn(`Не удалось удалить файл ${file.filePath}: ${err}`);
+        });
+
+        await this.prisma.image.delete({
+            where: { id: file.id },
+        });
+        return true;
     }
 
     private async findImageById(imageId: string) {
