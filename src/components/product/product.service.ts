@@ -1,7 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { join } from 'path';
 import { ITransformedFile } from 'src/common/interfaces/fileTransform.interface';
-import { promises as fs } from 'fs';
 import {
     CreateImageDto,
     CreateProductDto,
@@ -122,7 +120,7 @@ export class ProductService {
         }
         // Handle single image deletion if it exists
         if (product.image) {
-            await this.mediaService.deleteMedias([product.image.id]);
+            await this.mediaService.deleteMedia(product.image.id);
         }
 
         await this.prisma.product.delete({
@@ -167,7 +165,7 @@ export class ProductService {
         };
     }
 
-    async deleteMedia(productId: string) {
+    async deleteMedia(productId: string): Promise<TApiResp<true>> {
         console.log(`Удаление медиа с идентификатором продукта: ${productId}`);
         const file = await this.prisma.image.findFirst({
             where: { productId: productId },
@@ -178,26 +176,8 @@ export class ProductService {
             );
             throw new ImageNotFoundException();
         }
-
-        const filePath = join(__dirname, '..', '..', file.filePath);
-        await fs.unlink(filePath).catch((err) => {
-            console.warn(`Не удалось удалить файл ${file.filePath}: ${err}`);
-        });
-
-        await this.prisma.image.delete({
-            where: { id: file.id },
-        });
-        return true;
-    }
-
-    private async findImageById(imageId: string) {
-        const image = await this.prisma.image.findUnique({
-            where: { id: imageId },
-        });
-        if (!image) {
-            throw new ImageNotFoundException();
-        }
-        return image;
+        await this.mediaService.deleteMedia(file.id);
+        return { good: true };
     }
 
     private async findProductById(productId: string) {

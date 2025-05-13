@@ -1,34 +1,13 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { MinioService } from '../minio/minio.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ITransformedFile } from 'src/common/interfaces/fileTransform.interface';
-import { CreateImageDto } from '../contracts';
+import { join } from 'path';
+import { promises as fs } from 'fs';
 
 @Injectable()
 export class MediaService {
     private readonly logger = new Logger(MediaService.name);
 
-    constructor(
-        private minioService: MinioService,
-        private readonly prismaService: PrismaService,
-    ) {}
-
-    async createProductFileMedia(file: ITransformedFile) {
-        const mediaData: CreateImageDto = {
-            originalName: file.originalName,
-            fileName: file.fileName,
-            filePath: file.filePath,
-            mimeType: file.mimeType,
-            size: file.size,
-            productId: file.productId,
-        };
-
-        const media = await this.prismaService.image.create({
-            data: mediaData,
-        });
-
-        return media.id;
-    }
+    constructor(private readonly prismaService: PrismaService) {}
 
     async deleteMedias(fileIds: string[]) {
         this.logger.log(
@@ -41,8 +20,26 @@ export class MediaService {
             this.logger.warn('Некоторые файлы не найдены!');
             throw new NotFoundException('Some files are not found!');
         }
-        const fileNames = files.map((file) => file.fileName);
-        this.minioService.deleteFiles(fileNames);
+
+        // Удаляем физические файлы из папки uploads
+        for (const file of files) {
+            // Извлекаем относительный путь из полного URL
+            const relativePath = file.filePath.split('/uploads/')[1];
+            if (!relativePath) {
+                this.logger.warn(`Некорректный filePath: ${file.filePath}`);
+                continue;
+            }
+            const filePath = join(process.cwd(), 'uploads', relativePath);
+            try {
+                await fs.unlink(filePath);
+                this.logger.log(`Файл удален: ${filePath}`);
+            } catch {
+                this.logger.warn(`Не удалось удалить файл ${filePath}`);
+                // Продолжаем, чтобы не прерывать удаление других файлов
+            }
+        }
+
+        // Удаляем записи из базы данных
         await this.prismaService.image.deleteMany({
             where: { id: { in: fileIds } },
         });
@@ -57,7 +54,24 @@ export class MediaService {
             this.logger.warn(`Медиа с идентификатором ${mediaId} не найдено!`);
             throw new NotFoundException('Media not found!');
         }
-        await this.minioService.deleteFile(file.fileName);
+
+        // Извлекаем относительный путь из полного URL
+        const relativePath = file.filePath.split('/uploads/')[1];
+        console.log(relativePath);
+        if (!relativePath) {
+            this.logger.warn(`Некорректный filePath: ${file.filePath}`);
+        } else {
+            const filePath = join(process.cwd(), 'uploads', relativePath);
+            try {
+                await fs.unlink(filePath);
+                this.logger.log(`Файл удален: ${filePath}`);
+            } catch {
+                this.logger.warn(`Не удалось удалить файл ${filePath}`);
+                // Продолжаем, чтобы не прерывать удаление записи
+            }
+        }
+
+        // Удаляем запись из базы данных
         await this.prismaService.image.delete({
             where: { id: mediaId },
         });
