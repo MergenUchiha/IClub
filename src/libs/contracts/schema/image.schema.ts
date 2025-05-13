@@ -19,3 +19,5 @@ export const ImageResponseSchema = z.object({
     productId: z.string().optional(),
 });
 export const ImagesResponseSchema = z.array(ImageResponseSchema);
+
+export type TApiImageResponse = z.infer<typeof ImageResponseSchema>;

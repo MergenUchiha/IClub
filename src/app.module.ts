@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { TerminusModule } from '@nestjs/terminus';
@@ -25,6 +25,7 @@ import { OrderModule } from './components/order/order.module';
 import { BookingModule } from './components/booking/booking.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { StaticFileMiddleware } from './common/middlewares/static.middleware';
 
 @Module({
     imports: [
@@ -47,12 +48,17 @@ import { join } from 'path';
         DataInitModule,
         UserModule,
         UserAuthModule,
-        ServeStaticModule.forRoot({
-            rootPath: join(__dirname, '..', 'uploads'),
-            serveRoot: '/uploads',
-        }),
         OrderModule,
         BookingModule,
+        ServeStaticModule.forRoot({
+            rootPath: join(process.cwd(), 'Uploads'), // Используем process.cwd() для надежности
+            serveRoot: '/Uploads',
+            serveStaticOptions: {
+                redirect: false,
+                index: false,
+                cacheControl: false, // Отключаем кэширование для новых файлов
+            },
+        }),
     ],
     providers: [
         {
@@ -81,7 +87,11 @@ import { join } from 'path';
 })
 export class AppModule {
     constructor(private readonly dataInitService: DataInitService) {}
-    configure() {}
+
+    configure(consumer: MiddlewareConsumer) {
+        consumer.apply(StaticFileMiddleware).forRoutes('/Uploads/*'); // Уточняем маршруты
+    }
+
     async onModuleInit() {
         await this.dataInitService.onModuleInit();
     }

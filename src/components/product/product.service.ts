@@ -5,9 +5,11 @@ import { promises as fs } from 'fs';
 import {
     CreateImageDto,
     CreateProductDto,
+    ImageResponseSchema,
     PageDto,
     ProductResponseSchema,
     ProductsResponseSchema,
+    TApiImageResponse,
     TApiProductResponse,
     TApiProductsResponse,
     UpdateProductDto,
@@ -132,7 +134,10 @@ export class ProductService {
         };
     }
 
-    async createProductFileMedia(productId: string, file: ITransformedFile) {
+    async createProductFileMedia(
+        productId: string,
+        file: ITransformedFile,
+    ): Promise<TApiResp<TApiImageResponse>> {
         file.productId = productId;
         // Валидация файла
         try {
@@ -154,8 +159,12 @@ export class ProductService {
         const media = await this.prisma.image.create({
             data: mediaData,
         });
+        const parsed = ImageResponseSchema.parse(media);
 
-        return media.id;
+        return {
+            good: true,
+            response: parsed,
+        };
     }
 
     async deleteMedia(productId: string) {
