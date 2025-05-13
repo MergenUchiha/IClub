@@ -16,9 +16,16 @@ import './instrument';
 import { LoggerService } from './utils/logger/logger.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import fastifyCors from '@fastify/cors';
+import { join } from 'path';
+import { promises as fs } from 'fs';
 
 async function bootstrap() {
     patchNestJsSwagger();
+
+    // Создаем папку uploads перед запуском
+    const uploadDir = join(process.cwd(), 'uploads');
+    await fs.mkdir(uploadDir, { recursive: true });
+
     const app = await NestFactory.create<NestFastifyApplication>(
         AppModule,
         new FastifyAdapter(),
@@ -31,10 +38,9 @@ async function bootstrap() {
     app.useLogger(logger);
 
     const configService = app.get(ConfigService);
-
     const port = configService.getOrThrow<number>('PORT');
 
-    // await cacheService.init();
+    // Настройка Swagger
     if (configService.getOrThrow<boolean>('IS_SWAGGER_ENABLED')) {
         const config = new DocumentBuilder()
             .setTitle('IClub API')
@@ -47,23 +53,32 @@ async function bootstrap() {
         SwaggerModule.setup('docs', app, document);
     }
 
+    // Регистрация Fastify плагинов
     await app.register(fastifyHelmet);
     await app.register(fastifyCsrfProtection, { cookieOpts: { signed: true } });
     await app.register(fastifyCors, {
-        // credentials: true,
-        origin: `*`,
+        origin: '*', // Можно уточнить домен фронтенда в продакшене
     });
     await app.register(multipart);
     await app.register(fastifyCookie, {
-        secret: configService.getOrThrow<'string'>('COOKIE_SECRET'),
+        secret: configService.getOrThrow<string>('COOKIE_SECRET'),
     });
 
-    // app.use(compression());
-    app.useGlobalPipes(new ZodValidationPipe());
+    // Регистрируем @fastify/static для обслуживания файлов из uploads
+    await app.register(require('@fastify/static'), {
+        root: join(process.cwd(), 'uploads'),
+        prefix: '/uploads',
+        decorateReply: false, // Избегаем конфликтов с NestJS
+        cacheControl: false, // Отключаем кэширование для динамических файлов
+    });
 
+    // Глобальные пайпы и интерсепторы
+    app.useGlobalPipes(new ZodValidationPipe());
     app.useGlobalInterceptors(
         new ClassSerializerInterceptor(app.get(Reflector)),
     );
+
+    // Устанавливаем глобальный префикс API
     app.setGlobalPrefix('api');
 
     await app.listen(port, '0.0.0.0', () => {

@@ -17,7 +17,7 @@ export function UploadProductImageOperation() {
         UseInterceptors(
             FileFastifyInterceptor('image', {
                 storage: diskStorage({
-                    destination: join(process.cwd(), 'Uploads'), // Сохраняем сразу в Uploads
+                    destination: join(process.cwd(), 'uploads'), // Сохраняем сразу в Uploads
                     filename: (req, file, cb) => {
                         const fileExtension = file.mimetype.split('/')[1];
                         const uniqueFileName = `${randomUUID()}.${fileExtension}`;

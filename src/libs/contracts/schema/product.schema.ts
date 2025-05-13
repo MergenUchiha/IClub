@@ -22,7 +22,7 @@ export const ProductResponseSchema = z.object({
     description: z.string(),
     price: z.number().positive(),
     categoryId: z.string().uuid(),
-    image: ImageResponseSchema.optional(),
+    image: ImageResponseSchema.nullable().optional(),
 });
 
 export const ProductForOrderResponse = z.object({
