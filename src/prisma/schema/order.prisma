@@ -3,12 +3,13 @@ model Order {
      totalPrice  Float   @map("total_price")
      description String?  @db.Text
      status      Status  
+     orderNumber Int      @map("order_number")  @db.Integer @default(autoincrement())
 
      userId      String @db.Uuid @map("user_id")
      user        User  @relation(fields: [userId],references: [id],onDelete: Cascade)
      orderItems  OrderItem[] 
-     createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamp()
-     updatedAt    DateTime? @updatedAt @map("updated_at") @db.Timestamp()
+     createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp()
+     updatedAt   DateTime? @updatedAt @map("updated_at") @db.Timestamp()
 
    @@map("order")
 }

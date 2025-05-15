@@ -18,6 +18,7 @@ export const OrderUpdateRequestSchema = z.object({
 
 export const OrderResponseSchema = z.object({
     id: z.string().uuid(),
+    orderNumber: z.number(),
     status: z.enum(['PENDING', 'VERIFIED', 'CANCELLED']),
     description: z.string().optional(),
     totalPrice: z.number().positive(),

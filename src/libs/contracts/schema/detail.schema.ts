@@ -2,28 +2,27 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 
 const TurkmenistanPhoneNumberRegex = /^\+9936[0-9]{6}$/;
-export const Lesson = z.enum([
-    'LESSON1PLACE1',
-    'LESSON1PLACE2',
-    'LESSON2PLACE1',
-    'LESSON2PLACE2',
-    'LESSON3PLACE1',
-    'LESSON3PLACE2',
-]);
+export const Lesson = z.enum(['LESSON1', 'LESSON2', 'LESSON3']);
 export type Lesson = z.infer<typeof Lesson>;
 
 export const DetailAddRequestSchema = z.object({
     group: z.string(),
+    lesson: z.string(),
+    tv: z.boolean(),
+    department: z.string(),
     teacher: z.string(),
     phoneNumber: z.string().regex(TurkmenistanPhoneNumberRegex, {
         message:
             'Номер телефона должен быть в формате Туркменистана, например, +99361123456',
     }),
-    lesson: Lesson,
+    lessonNumber: Lesson,
 });
 
 export const DetailUpdateRequestSchema = z.object({
     group: z.string().optional(),
+    lesson: z.string().optional(),
+    tv: z.boolean().optional(),
+    department: z.string().optional(),
     teacher: z.string().optional(),
     phoneNumber: z
         .string()
@@ -32,6 +31,7 @@ export const DetailUpdateRequestSchema = z.object({
                 'Номер телефона должен быть в формате Туркменистана, например, +99361123456',
         })
         .optional(),
+    lessonNumber: Lesson.optional(),
 });
 
 export const DetailResponseSchema = z.object({
@@ -42,7 +42,10 @@ export const DetailResponseSchema = z.object({
         message:
             'Номер телефона должен быть в формате Туркменистана, например, +99361123456',
     }),
-    lesson: Lesson,
+    lessonNumber: Lesson,
+    lesson: z.string(),
+    tv: z.boolean(),
+    department: z.string(),
     createdAt: z.date(),
     updatedAt: z.date(),
 });
