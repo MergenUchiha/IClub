@@ -37,6 +37,9 @@ export class BookingService {
                         phoneNumber: dto.details.phoneNumber,
                         lesson: dto.details.lesson,
                         teacher: dto.details.teacher,
+                        department: dto.details.department,
+                        tv: dto.details.tv,
+                        lessonNumber: dto.details.lessonNumber,
                     },
                 },
             },
@@ -61,7 +64,7 @@ export class BookingService {
             throw new BookingNotFoundException();
         }
         booking.details.map((detail) => {
-            if (detail.lesson === dto.lesson) {
+            if (detail.lesson === dto.lesson && detail.tv === dto.tv) {
                 throw new LessonExistingConflictException();
             }
         });
@@ -73,6 +76,9 @@ export class BookingService {
                 phoneNumber: dto.phoneNumber,
                 lesson: dto.lesson,
                 teacher: dto.teacher,
+                department: dto.department,
+                lessonNumber: dto.lessonNumber,
+                tv: dto.tv,
             },
         });
         const updatedBooking = await this.prisma.booking.findUnique({
