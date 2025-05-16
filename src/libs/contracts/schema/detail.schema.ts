@@ -6,7 +6,7 @@ export const Lesson = z.enum(['LESSON1', 'LESSON2', 'LESSON3']);
 export type Lesson = z.infer<typeof Lesson>;
 
 export const DetailAddRequestSchema = z.object({
-    group: z.string(),
+    group: z.number().min(4).max(4),
     lesson: z.string(),
     tv: z.boolean(),
     department: z.string(),
@@ -19,7 +19,7 @@ export const DetailAddRequestSchema = z.object({
 });
 
 export const DetailUpdateRequestSchema = z.object({
-    group: z.string().optional(),
+    group: z.number().min(4).max(4).optional(),
     lesson: z.string().optional(),
     tv: z.boolean().optional(),
     department: z.string().optional(),
@@ -36,7 +36,7 @@ export const DetailUpdateRequestSchema = z.object({
 
 export const DetailResponseSchema = z.object({
     id: z.string().uuid(),
-    group: z.string(),
+    group: z.number(),
     teacher: z.string(),
     phoneNumber: z.string().regex(TurkmenistanPhoneNumberRegex, {
         message:
