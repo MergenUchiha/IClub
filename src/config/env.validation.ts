@@ -15,8 +15,6 @@ export const envSchema = z.object({
     JWT_REFRESH_SECRET: z.string(),
     JWT_ACCESS_TIME: z.string(),
     JWT_REFRESH_TIME: z.string(),
-
-    SENTRY_DNS: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
