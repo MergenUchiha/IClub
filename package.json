@@ -17,6 +17,7 @@
         "build": "nest build",
         "seed": "tsc && dotenv -e .development.env --  node dist/helpers/seeds/seed.js",
         "start:dev": "cross-env NODE_ENV=development dotenv -e .development.env -- concurrently \"tsc -w\" \"nest start --watch\"",
+        "build:dev": "cross-env NODE_ENV=development dotenv -e .development.env -- concurrently \"nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start:test": "nest start -b swc --type-check --watch",
         "start:debug": "nest start --debug --watch",
