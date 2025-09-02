@@ -28,6 +28,7 @@ export class UserService {
             data: {
                 firstName: dto.firstName,
                 secondName: dto.secondName,
+                studentId: dto.studentId,
                 phoneNumber: dto.phoneNumber,
                 password: dto.password,
             },
@@ -77,6 +78,7 @@ export class UserService {
             data: {
                 firstName: dto.firstName,
                 secondName: dto.secondName,
+                studentId: dto.studentId,
                 phoneNumber: dto.phoneNumber,
                 password: dto.password,
             },

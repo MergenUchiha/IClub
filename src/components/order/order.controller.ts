@@ -22,6 +22,8 @@ import { GetOneOrderOperation } from './decorator/getOneOrderOperation.decorator
 import { GetMyOneOrderOperation } from './decorator/getMyOneOrderOperation.decorator';
 import { GetMyOrdersOperation } from './decorator/getMyOrdersOperation.decorator';
 import { GetOrdersOperation } from './decorator/getOrdersOperation.decorator';
+import { CancelOrderByAdminOperation } from './decorator/cancelOrderByAdminOperation.decorator';
+import { CompleteOrderOperation } from './decorator/completeOrderOperation.decorator';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -50,6 +52,20 @@ export class OrderController {
             throw new UnauthorizedException();
         }
         return this.orderService.cancelOrder(user, orderId);
+    }
+
+    @CancelOrderByAdminOperation()
+    @Patch('admin/:id/cancel')
+    async cancelOrderByAdmin(
+        @Param('id') orderId: string,
+    ): Promise<TApiResp<true>> {
+        return this.orderService.cancelOrderByAdmin(orderId);
+    }
+
+    @CompleteOrderOperation()
+    @Patch('admin/:id/complete')
+    async completeOrder(@Param('id') orderId: string): Promise<TApiResp<true>> {
+        return this.orderService.completeOrder(orderId);
     }
 
     @UpdateOrderOperation()

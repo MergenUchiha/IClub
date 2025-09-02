@@ -14,6 +14,9 @@ import {
     UserNotFoundException,
     OrderNotFoundException,
     OrderConflictException,
+    OrderCancelConflictException,
+    OrderUpdateConflictException,
+    OrderCompleteConflictException,
 } from 'src/libs/contracts/exceptions';
 import { TApiResp } from 'src/libs/contracts/interface';
 
@@ -88,12 +91,45 @@ export class OrderService {
                 'Unauthorized: You can only cancel your own orders',
             );
         }
-        if (order.status === 'VERIFIED') {
-            throw new OrderConflictException();
+        if (order.status === 'VERIFIED' || order.status === 'COMPLETED') {
+            throw new OrderCancelConflictException();
         }
         await this.prisma.order.update({
             where: { id: orderId },
             data: { status: 'CANCELLED' },
+        });
+        return {
+            good: true,
+        };
+    }
+
+    async cancelOrderByAdmin(orderId: string): Promise<TApiResp<true>> {
+        const order = await this.findOrderById(orderId);
+        if (order.status === 'VERIFIED' || order.status === 'COMPLETED') {
+            throw new OrderCancelConflictException();
+        }
+        await this.prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'CANCELLED' },
+        });
+        return {
+            good: true,
+        };
+    }
+
+    async completeOrder(orderId: string): Promise<TApiResp<true>> {
+        const order = await this.findOrderById(orderId);
+
+        if (
+            order.status === 'VERIFIED' ||
+            order.status === 'COMPLETED' ||
+            order.status === 'CANCELLED'
+        ) {
+            throw new OrderCompleteConflictException();
+        }
+        await this.prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'COMPLETED' },
         });
         return {
             good: true,
@@ -105,8 +141,12 @@ export class OrderService {
         dto: UpdateOrderDto,
     ): Promise<TApiResp<true>> {
         const order = await this.findOrderById(orderId);
-        if (order.status === 'CANCELLED' || order.status === 'VERIFIED') {
-            throw new OrderConflictException();
+        if (
+            order.status === 'CANCELLED' ||
+            order.status === 'VERIFIED' ||
+            order.status === 'COMPLETED'
+        ) {
+            throw new OrderUpdateConflictException();
         }
         await this.prisma.order.update({
             where: { id: orderId },

@@ -226,3 +226,50 @@ export class LessonExistingConflictException extends ApiBaseException {
         );
     }
 }
+
+export class UserBannedException extends ApiBaseException {
+    static CODE = 15;
+    constructor() {
+        super(
+            'User was banned!',
+            UserBannedException.CODE,
+            null,
+            HttpStatus.FORBIDDEN,
+        );
+    }
+}
+
+export class OrderCancelConflictException extends ApiBaseException {
+    static CODE = 16;
+    constructor() {
+        super(
+            'Cannot cancel a verified or completed order.',
+            OrderCancelConflictException.CODE,
+            null,
+            HttpStatus.CONFLICT,
+        );
+    }
+}
+export class OrderCompleteConflictException extends ApiBaseException {
+    static CODE = 17;
+    constructor() {
+        super(
+            'Cannot complete a verified or cancelled order.',
+            OrderCompleteConflictException.CODE,
+            null,
+            HttpStatus.CONFLICT,
+        );
+    }
+}
+
+export class OrderUpdateConflictException extends ApiBaseException {
+    static CODE = 18;
+    constructor() {
+        super(
+            'Can not update an order',
+            OrderUpdateConflictException.CODE,
+            null,
+            HttpStatus.CONFLICT,
+        );
+    }
+}
