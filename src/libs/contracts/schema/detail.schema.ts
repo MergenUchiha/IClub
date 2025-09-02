@@ -10,6 +10,7 @@ export const DetailAddRequestSchema = z.object({
     lesson: z.string(),
     tv: z.boolean(),
     department: z.string(),
+    teachersDepartment: z.string(),
     teacher: z.string(),
     phoneNumber: z.string().regex(TurkmenistanPhoneNumberRegex, {
         message:
@@ -23,6 +24,7 @@ export const DetailUpdateRequestSchema = z.object({
     lesson: z.string().optional(),
     tv: z.boolean().optional(),
     department: z.string().optional(),
+    teachersDepartment: z.string().optional(),
     teacher: z.string().optional(),
     phoneNumber: z
         .string()
@@ -37,6 +39,7 @@ export const DetailUpdateRequestSchema = z.object({
 export const DetailResponseSchema = z.object({
     id: z.string().uuid(),
     group: z.number(),
+    teachersDepartment: z.string(),
     teacher: z.string(),
     phoneNumber: z.string().regex(TurkmenistanPhoneNumberRegex, {
         message:

@@ -10,6 +10,7 @@ import { IS_PUBLIC_KEY } from '../decorators/isPublic.decorator';
 import { IS_USER_KEY } from '../decorators/isUser.decorator';
 import { TokenService } from 'src/components/token/token.service';
 import { IS_ADMIN_KEY } from '../decorators/isAdmin.decorator';
+import { UserBannedException } from 'src/libs/contracts/exceptions';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -33,7 +34,9 @@ export class AuthGuard implements CanActivate {
 
             if (this.isUserRoute(context)) {
                 const userToken = this.tokenService.validateAccessToken(token);
-
+                if (userToken.isBanned) {
+                    throw new UserBannedException();
+                }
                 req.currentUser = userToken;
 
                 return true;

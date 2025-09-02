@@ -12,6 +12,7 @@ enum Status {
   PENDING
   CANCELLED
   VERIFIED
+  COMPLETED
 
   @@map("status")
 }

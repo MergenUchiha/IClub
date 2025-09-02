@@ -17,10 +17,10 @@ export class DataInitService implements OnModuleInit {
     }
 
     async createDefaultAdmin() {
-        const defaultAdminUsername = this.configService.get(
+        const defaultAdminUsername = this.configService.getOrThrow<string>(
             'DEFAULT_ADMIN_USERNAME',
         );
-        const defaultAdminPassword = this.configService.get(
+        const defaultAdminPassword = this.configService.getOrThrow<string>(
             'DEFAULT_ADMIN_PASSWORD',
         );
 

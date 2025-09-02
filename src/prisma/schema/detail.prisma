@@ -5,6 +5,7 @@ model Detail {
     lesson          String    @db.VarChar(255)
     group           Int       @db.Integer
     teacher         String    @db.VarChar(255)
+    teachersDepartment String @map("teachers_department")  @db.VarChar(255)
     phoneNumber     String    @map("phone_number") @db.VarChar(12)
     tv              Boolean   @db.Boolean          @default(false)
 
