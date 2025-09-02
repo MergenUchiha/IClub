@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { TerminusModule } from '@nestjs/terminus';
 import { SentryModule } from '@sentry/nestjs/setup';
@@ -26,6 +26,11 @@ import { BookingModule } from './components/booking/booking.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { StaticFileMiddleware } from './common/middlewares/static.middleware';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
+
+// 🔑 Исправление: импортируем ioredis
+import Redis from 'ioredis';
 
 @Module({
     imports: [
@@ -36,6 +41,43 @@ import { StaticFileMiddleware } from './common/middlewares/static.middleware';
             isGlobal: true,
             cache: true,
         }),
+        // ⚡ Throttler только для production
+        ...(process.env.NODE_ENV === 'production'
+            ? [
+                  ThrottlerModule.forRootAsync({
+                      imports: [ConfigModule],
+                      inject: [ConfigService],
+                      useFactory: (configService: ConfigService) => {
+                          const redis: Redis = new Redis({
+                              host: configService.getOrThrow<string>(
+                                  'REDIS_HOST',
+                              ),
+                              port: configService.getOrThrow<number>(
+                                  'REDIS_PORT',
+                              ),
+                              password:
+                                  configService.getOrThrow<string>(
+                                      'REDIS_PASSWORD',
+                                  ),
+                          });
+
+                          return {
+                              throttlers: [
+                                  {
+                                      limit: configService.getOrThrow<number>(
+                                          'RATE_LIMIT_LIMIT',
+                                      ),
+                                      ttl: configService.getOrThrow<number>(
+                                          'RATE_LIMIT_TTL',
+                                      ),
+                                  },
+                              ],
+                              storage: new ThrottlerStorageRedisService(redis),
+                          };
+                      },
+                  }),
+              ]
+            : []),
         TerminusModule.forRoot(),
         LoggerModule,
         HealthModule,
