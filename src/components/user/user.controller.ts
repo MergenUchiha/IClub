@@ -25,6 +25,7 @@ import { UpdateUserOperation } from './decorator/updateUserOperation.decorator';
 import { DeleteUserOperation } from './decorator/deleteUserOperation.decorator';
 import { ADMIN } from 'src/common/decorators/isAdmin.decorator';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { BanUserOperation } from './decorator/banUserOperationOperation.decorator';
 
 @ApiBearerAuth()
 @ADMIN()
@@ -63,6 +64,14 @@ export class UserController {
         @Body() dto: UserUpdateDto,
     ): Promise<TApiResp<TApiUserResponse>> {
         return await this.userService.updateUser(userId, dto);
+    }
+
+    @BanUserOperation()
+    @Patch(':userId/ban')
+    async banUser(
+        @Param('userId', ParseUUIDPipe) userId: string,
+    ): Promise<TApiResp<true>> {
+        return await this.userService.banUser(userId);
     }
 
     @DeleteUserOperation()

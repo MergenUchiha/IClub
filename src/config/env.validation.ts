@@ -15,6 +15,11 @@ export const envSchema = z.object({
     JWT_REFRESH_SECRET: z.string(),
     JWT_ACCESS_TIME: z.string(),
     JWT_REFRESH_TIME: z.string(),
+
+    JWT_ADMIN_ACCESS_SECRET: z.string(),
+    JWT_ADMIN_REFRESH_SECRET: z.string(),
+    JWT_ADMIN_ACCESS_TIME: z.string(),
+    JWT_ADMIN_REFRESH_TIME: z.string(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

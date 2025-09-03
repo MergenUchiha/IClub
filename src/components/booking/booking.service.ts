@@ -5,9 +5,12 @@ import {
     BookingsResponseSchema,
     CreateBookingDto,
     DetailResponseSchema,
+    DetailsResponseSchema,
+    GetBookingByDateDto,
     TApiBookingResponse,
     TApiBookingsResponse,
     TApiDetailResponse,
+    TApiDetailsResponse,
     UpdateBookingDetailDto,
 } from 'src/libs/contracts';
 import {
@@ -15,6 +18,7 @@ import {
     BookingDetailNotFoundException,
     BookingNotFoundException,
     LessonExistingConflictException,
+    UserNotFoundException,
 } from 'src/libs/contracts/exceptions';
 import { TApiResp } from 'src/libs/contracts/interface';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -23,28 +27,40 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class BookingService {
     constructor(private prisma: PrismaService) {}
 
+    async getBookingByDate(
+        dto: GetBookingByDateDto,
+    ): Promise<TApiResp<TApiBookingResponse>> {
+        const booking = await this.prisma.booking.findUnique({
+            where: { bookingDate: dto.bookingDate },
+        });
+        if (!booking) {
+            throw new BookingNotFoundException();
+        }
+        const parsed = BookingResponseSchema.parse(booking);
+        return {
+            good: true,
+            response: parsed,
+        };
+    }
+
     async createBooking(
         dto: CreateBookingDto,
+        userId: string,
     ): Promise<TApiResp<TApiBookingResponse>> {
-        const date = new Date().toISOString().split('T')[0]!;
-        await this.isBookingDateExist(date);
+        await this.isBookingDateExist(dto.bookingDate);
+        await this.findUserById(userId);
         const booking = await this.prisma.booking.create({
             data: {
-                bookingDate: date,
+                bookingDate: dto.bookingDate,
                 details: {
                     create: {
-                        group: dto.details.group,
-                        phoneNumber: dto.details.phoneNumber,
                         lesson: dto.details.lesson,
-                        teachersDepartment: dto.details.teachersDepartment,
-                        teacher: dto.details.teacher,
-                        department: dto.details.department,
                         tv: dto.details.tv,
-                        lessonNumber: dto.details.lessonNumber,
+                        userId: userId,
                     },
                 },
             },
-            include: { details: true },
+            include: { details: { include: { user: true } } },
         });
         const parsed = BookingResponseSchema.parse(booking);
         return {
@@ -55,6 +71,7 @@ export class BookingService {
 
     async addToExistingBooking(
         bookingId: string,
+        userId: string,
         dto: AddBookingDetailDto,
     ): Promise<TApiResp<TApiBookingResponse>> {
         const booking = await this.prisma.booking.findUnique({
@@ -73,13 +90,8 @@ export class BookingService {
         await this.prisma.detail.create({
             data: {
                 bookingId: bookingId,
-                group: dto.group,
-                phoneNumber: dto.phoneNumber,
                 lesson: dto.lesson,
-                teachersDepartment: dto.teachersDepartment,
-                teacher: dto.teacher,
-                department: dto.department,
-                lessonNumber: dto.lessonNumber,
+                userId: userId,
                 tv: dto.tv,
             },
         });
@@ -103,9 +115,8 @@ export class BookingService {
         const detail = await this.prisma.detail.update({
             where: { id: detailId },
             data: {
-                group: dto.group,
-                phoneNumber: dto.phoneNumber,
-                teacher: dto.teacher,
+                tv: dto.tv,
+                lesson: dto.lesson,
             },
         });
         const parsed = DetailResponseSchema.parse(detail);
@@ -117,7 +128,7 @@ export class BookingService {
 
     async getAllBookings(): Promise<TApiResp<TApiBookingsResponse>> {
         const bookings = await this.prisma.booking.findMany({
-            include: { details: true },
+            include: { details: { include: { user: true } } },
         });
         const parsed = BookingsResponseSchema.parse(bookings);
 
@@ -132,7 +143,7 @@ export class BookingService {
     ): Promise<TApiResp<TApiBookingResponse>> {
         const booking = await this.prisma.booking.findUnique({
             where: { id: bookingId },
-            include: { details: true },
+            include: { details: { include: { user: true } } },
         });
         if (!booking) {
             throw new BookingNotFoundException();
@@ -142,6 +153,16 @@ export class BookingService {
             good: true,
             response: parsed,
         };
+    }
+
+    async getMyBooking(userId: string): Promise<TApiResp<TApiDetailsResponse>> {
+        await this.findUserById(userId);
+        const bookingDetails = await this.prisma.detail.findMany({
+            where: { userId: userId },
+            include: { booking: true },
+        });
+        const parsed = DetailsResponseSchema.parse(bookingDetails);
+        return { good: true, response: parsed };
     }
 
     async deleteBookingDetail(detailId: string): Promise<TApiResp<true>> {
@@ -170,6 +191,15 @@ export class BookingService {
         });
         if (booking) {
             throw new BookingDateExistenceException();
+        }
+    }
+
+    private async findUserById(userId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new UserNotFoundException();
         }
     }
 

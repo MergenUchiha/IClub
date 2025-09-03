@@ -30,6 +30,8 @@ export class UserService {
                 secondName: dto.secondName,
                 studentId: dto.studentId,
                 phoneNumber: dto.phoneNumber,
+                department: dto.department,
+                isTeacher: dto.isTeacher,
                 password: dto.password,
             },
         });
@@ -80,6 +82,8 @@ export class UserService {
                 secondName: dto.secondName,
                 studentId: dto.studentId,
                 phoneNumber: dto.phoneNumber,
+                isTeacher: dto.isTeacher,
+                department: dto.department,
                 password: dto.password,
             },
         });
@@ -87,6 +91,17 @@ export class UserService {
         return {
             good: true,
             response: parsed,
+        };
+    }
+
+    async banUser(userId: string): Promise<TApiResp<true>> {
+        await this.findUserById(userId);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { isBanned: true },
+        });
+        return {
+            good: true,
         };
     }
 

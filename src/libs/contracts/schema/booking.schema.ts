@@ -2,10 +2,18 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { DetailAddRequestSchema, DetailsResponseSchema } from './detail.schema';
 
+export const GetBookingByDateRequestSchema = z.object({
+    bookingDate: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+});
+
 export const BookingCreateRequestSchema = z.object({
     bookingDate: z
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    // tv: z.boolean(),
+    // lesson: Lesson,
     details: DetailAddRequestSchema,
 });
 

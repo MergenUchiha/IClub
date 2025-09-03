@@ -18,30 +18,47 @@ import {
     TApiBookingResponse,
     TApiBookingsResponse,
     TApiDetailResponse,
+    TApiDetailsResponse,
+    GetBookingByDateDto,
 } from 'src/libs/contracts';
 import { TApiResp } from 'src/libs/contracts/interface';
-import { ADMIN } from 'src/common/decorators/isAdmin.decorator';
 import { CreateBookingOperation } from './decorator/createBookingOperation.decorator';
 import { AddToExistingBookingOperation } from './decorator/addToExistingBookingOperation.decorator';
 import { UpdateBookingDetailOperation } from './decorator/updateBookingDetailOperation.decorator';
-import { GetAllBookingsOperation } from './decorator/getAllBookingsOperation.decorator';
+import {
+    GetAllBookingsForAdminOperation,
+    GetAllBookingsOperation,
+} from './decorator/getAllBookingsOperation.decorator';
 import { GetOneBookingOperation } from './decorator/getOneBookingOperation.decorator';
 import { DeleteBookingDetailOperation } from './decorator/deleteBookingDetailOperation.decorator';
+import { CurrentUser } from 'src/common/decorators/currentUser.decorator';
+import { UserTokenDto } from '../token/dto/userToken.dto';
+import { GetMyBookingOperation } from './decorator/getMyBookingOperation.decorator';
+import { GetBookingByDateOperation } from './decorator/getBookingByDateOperation.decorator';
 
-@ADMIN()
 @ApiTags('Bookings')
 @ApiBearerAuth()
 @Controller('bookings')
 export class BookingController {
     constructor(private readonly bookingService: BookingService) {}
 
+    @GetBookingByDateOperation()
+    @HttpCode(HttpStatus.OK)
+    @Get('date')
+    async getBookingByDate(
+        @Body() dto: GetBookingByDateDto,
+    ): Promise<TApiResp<TApiBookingResponse>> {
+        return await this.bookingService.getBookingByDate(dto);
+    }
+
     @CreateBookingOperation()
     @HttpCode(HttpStatus.OK)
     @Post()
     async createBooking(
         @Body() dto: CreateBookingDto,
+        @CurrentUser() user: UserTokenDto,
     ): Promise<TApiResp<TApiBookingResponse>> {
-        return this.bookingService.createBooking(dto);
+        return this.bookingService.createBooking(dto, user.id);
     }
 
     @AddToExistingBookingOperation()
@@ -50,8 +67,13 @@ export class BookingController {
     async addToExistingBooking(
         @Param('bookingId') bookingId: string,
         @Body() dto: AddBookingDetailDto,
+        @CurrentUser() user: UserTokenDto,
     ): Promise<TApiResp<TApiBookingResponse>> {
-        return this.bookingService.addToExistingBooking(bookingId, dto);
+        return this.bookingService.addToExistingBooking(
+            bookingId,
+            user.id,
+            dto,
+        );
     }
 
     @UpdateBookingDetailOperation()
@@ -64,6 +86,13 @@ export class BookingController {
         return this.bookingService.updateBookingDetail(detailId, dto);
     }
 
+    @GetAllBookingsForAdminOperation()
+    @HttpCode(HttpStatus.OK)
+    @Get('/admin')
+    async getAllBookingsForAdmin(): Promise<TApiResp<TApiBookingsResponse>> {
+        return this.bookingService.getAllBookings();
+    }
+
     @GetAllBookingsOperation()
     @HttpCode(HttpStatus.OK)
     @Get()
@@ -71,8 +100,17 @@ export class BookingController {
         return this.bookingService.getAllBookings();
     }
 
+    @GetMyBookingOperation()
+    @HttpCode(HttpStatus.OK)
+    @Get('/details/my')
+    async getMyBooking(
+        @CurrentUser() user: UserTokenDto,
+    ): Promise<TApiResp<TApiDetailsResponse>> {
+        return this.bookingService.getMyBooking(user.id);
+    }
+
     @GetOneBookingOperation()
-    @Get(':bookingId')
+    @Get('admin/:bookingId')
     @HttpCode(HttpStatus.OK)
     async getOneBooking(
         @Param('bookingId') bookingId: string,
