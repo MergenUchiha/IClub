@@ -1,14 +1,10 @@
 model Detail {
     id              String    @id @default(uuid()) @db.Uuid
-    lessonNumber    Lesson    @map("lesson_number")
-    department      String    @db.VarChar(255)
-    lesson          String    @db.VarChar(255)
-    group           Int       @db.Integer
-    teacher         String    @db.VarChar(255)
-    teachersDepartment String @map("teachers_department")  @db.VarChar(255)
-    phoneNumber     String    @map("phone_number") @db.VarChar(12)
-    tv              Boolean   @db.Boolean          @default(false)
+    lesson          Lesson   
+    tv              Boolean   @db.Boolean  @default(false)
 
+    userId          String    @db.Uuid  @map("user_id")
+    user            User      @relation(fields: [userId],references: [id])
     bookingId       String    @unique @db.Uuid   @map("booking_id")
     booking         Booking   @relation(fields: [bookingId],references: [id],onDelete: Cascade)
     createdAt       DateTime? @default(now()) @map("created_at")

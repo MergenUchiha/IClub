@@ -6,18 +6,22 @@ const TurkmenistanPhoneNumberRegex = /^\+9936[0-9]{7}$/;
 export const UserCreateRequestSchema = z.object({
     firstName: z.string(),
     secondName: z.string(),
-    studentId: z.string(),
+    studentId: z.string().optional(),
+    department: z.string(),
     phoneNumber: z.string().regex(TurkmenistanPhoneNumberRegex, {
         message:
             'Номер телефона должен быть в формате Туркменистана, например, +99361123456',
     }),
+    isTeacher: z.boolean().optional(),
     password: z.string().min(8),
 });
 
 export const UserUpdateRequestSchema = z.object({
     firstName: z.string().optional(),
     secondName: z.string().optional(),
-    studentId: z.string(),
+    department: z.string().optional(),
+    isTeacher: z.boolean().optional(),
+    studentId: z.string().optional(),
     phoneNumber: z
         .string()
         .regex(TurkmenistanPhoneNumberRegex, {
@@ -41,6 +45,8 @@ export const UserResponseSchema = z.object({
     firstName: z.string(),
     secondName: z.string(),
     studentId: z.string(),
+    department: z.string(),
+    isTeacher: z.boolean(),
     phoneNumber: z.string(),
     createdAt: z.date(),
     updatedAt: z.date(),
@@ -51,6 +57,8 @@ export const UserTokenResponseSchema = z.object({
     firstName: z.string(),
     secondName: z.string(),
     studentId: z.string(),
+    department: z.string(),
+    isTeacher: z.boolean(),
     phoneNumber: z.string(),
     refreshToken: z.string().jwt(),
     accessToken: z.string().jwt(),

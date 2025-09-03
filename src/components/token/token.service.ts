@@ -149,19 +149,19 @@ export class TokenService {
 
     generateAdminTokens(payload: AdminTokenDto) {
         const accessExpiresIn = parseInt(
-            this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+            this.configService.getOrThrow<string>('JWT_ADMIN_ACCESS_SECRET'),
             10,
         );
 
         const refreshExpiresIn = parseInt(
-            this.configService.getOrThrow<string>('JWT_REFRESH_TIME'),
+            this.configService.getOrThrow<string>('JWT_ADMIN_REFRESH_TIME'),
             10,
         );
 
         console.log(isNaN(accessExpiresIn) ? '1h' : accessExpiresIn);
         const accessToken = jwt.sign(
             payload,
-            this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+            this.configService.getOrThrow<string>('JWT_ADMIN_ACCESS_SECRET'),
             {
                 expiresIn: isNaN(accessExpiresIn) ? '1h' : accessExpiresIn,
             },
@@ -169,7 +169,7 @@ export class TokenService {
 
         const refreshToken = jwt.sign(
             payload,
-            this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+            this.configService.getOrThrow<string>('JWT_ADMIN_REFRESH_SECRET'),
             {
                 expiresIn: isNaN(refreshExpiresIn) ? '30d' : refreshExpiresIn,
             },
@@ -210,7 +210,9 @@ export class TokenService {
         try {
             const token = jwt.verify(
                 accessToken,
-                this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+                this.configService.getOrThrow<string>(
+                    'JWT_ADMIN_ACCESS_SECRET',
+                ),
             );
 
             this.logger.log(`Validated access token`);
@@ -230,7 +232,9 @@ export class TokenService {
         try {
             const token = jwt.verify(
                 refreshToken,
-                this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+                this.configService.getOrThrow<string>(
+                    'JWT_ADMIN_REFRESH_SECRET',
+                ),
             );
 
             this.logger.log(`Validated refresh token`);

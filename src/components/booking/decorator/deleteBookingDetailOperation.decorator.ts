@@ -1,8 +1,10 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { USER } from 'src/common/decorators/isUser.decorator';
 
 export function DeleteBookingDetailOperation() {
     return applyDecorators(
+        USER(),
         ApiOperation({ summary: 'Delete booking details' }),
         ApiParam({
             name: 'detailId',

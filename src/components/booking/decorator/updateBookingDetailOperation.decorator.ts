@@ -1,9 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { USER } from 'src/common/decorators/isUser.decorator';
 import { DetailResponseDto } from 'src/libs/contracts';
 
 export function UpdateBookingDetailOperation() {
     return applyDecorators(
+        USER(),
         ApiOperation({ summary: 'Update booking details' }),
         ApiParam({
             name: 'detailId',
