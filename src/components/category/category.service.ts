@@ -4,6 +4,7 @@ import {
     CategoriesResponseSchema,
     CategoryResponseSchema,
     CreateCategoryDto,
+    PageDto,
     // PageDto,
     TApiCategoriesResponse,
     TApiCategoryResponse,
@@ -37,14 +38,15 @@ export class CategoryService {
         return { good: true, response: parsed };
     }
 
-    async getCategories() // query: PageDto,
-    : Promise<TApiResp<TApiCategoriesResponse>> {
-        // const { page = 1, take = 5, q = '' } = query;
+    async getCategories(
+        query: PageDto,
+    ): Promise<TApiResp<TApiCategoriesResponse>> {
+        const { page = 1, take = 5, q = '' } = query;
         const categories = await this.prisma.category.findMany({
-            // where: { title: { contains: q } },
+            where: { title: { contains: q } },
             orderBy: { title: 'asc' },
-            // take,
-            // skip: (page - 1) * take,
+            take,
+            skip: (page - 1) * take,
         });
         const parsed = CategoriesResponseSchema.parse(categories);
         return { good: true, response: parsed };

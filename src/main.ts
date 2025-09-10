@@ -57,6 +57,7 @@ async function bootstrap() {
     await app.register(fastifyHelmet);
     await app.register(fastifyCsrfProtection, { cookieOpts: { signed: true } });
     await app.register(fastifyCors, {
+        credentials: true,
         origin: '*', // Можно уточнить домен фронтенда в продакшене
     });
     await app.register(multipart);

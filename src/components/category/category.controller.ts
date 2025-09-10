@@ -7,10 +7,12 @@ import {
     ParseUUIDPipe,
     Patch,
     Post,
+    Query,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import {
     CreateCategoryDto,
+    PageDto,
     TApiCategoriesResponse,
     TApiCategoryResponse,
     UpdateCategoryDto,
@@ -38,9 +40,10 @@ export class CategoryController {
 
     @GetCategoriesOperation()
     @Get()
-    async getCategories() // @Query() query: PageDto,
-    : Promise<TApiResp<TApiCategoriesResponse>> {
-        return await this.categoryService.getCategories();
+    async getCategories(
+        @Query() query: PageDto,
+    ): Promise<TApiResp<TApiCategoriesResponse>> {
+        return await this.categoryService.getCategories(query);
     }
 
     @GetOneCategoryOperation()
