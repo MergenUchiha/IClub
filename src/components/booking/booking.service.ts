@@ -32,6 +32,13 @@ export class BookingService {
     ): Promise<TApiResp<TApiBookingResponse>> {
         const booking = await this.prisma.booking.findUnique({
             where: { bookingDate: dto.bookingDate },
+            include: {
+                details: {
+                    include: {
+                        user: true,
+                    },
+                },
+            },
         });
         if (!booking) {
             throw new BookingNotFoundException();
