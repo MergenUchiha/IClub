@@ -28,6 +28,7 @@ import { join } from 'path';
 import { StaticFileMiddleware } from './common/middlewares/static.middleware';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
+import { DepartmentModule } from './components/department/department.module';
 
 // 🔑 Исправление: импортируем ioredis
 import Redis from 'ioredis';
@@ -101,6 +102,7 @@ import Redis from 'ioredis';
                 cacheControl: false, // Отключаем кэширование для новых файлов
             },
         }),
+        DepartmentModule,
     ],
     providers: [
         {

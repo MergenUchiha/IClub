@@ -27,7 +27,7 @@ export const BookingUpdateRequestSchema = z.object({
 export const BookingResponseSchema = z.object({
     id: z.string().uuid(),
     bookingDate: z.string(),
-    details: DetailsResponseSchema,
+    details: DetailsResponseSchema.optional(),
     createdAt: z.date(),
     updatedAt: z.date(),
 });

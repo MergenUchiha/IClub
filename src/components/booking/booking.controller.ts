@@ -44,7 +44,7 @@ export class BookingController {
 
     @GetBookingByDateOperation()
     @HttpCode(HttpStatus.OK)
-    @Get('date')
+    @Post('date')
     async getBookingByDate(
         @Body() dto: GetBookingByDateDto,
     ): Promise<TApiResp<TApiBookingResponse>> {

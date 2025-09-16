@@ -1,0 +1,6 @@
+model Department {
+    id         String    @id() @default(uuid()) @db.Uuid
+    title       String    @db.VarChar(255)
+
+    @@map("department")
+}

@@ -75,6 +75,7 @@ export class TApiUserAuthTokenResponse extends createZodDto(
         firstName: true,
         secondName: true,
         phoneNumber: true,
+        isTeacher: true,
         refreshToken: true,
         accessToken: true,
     }),

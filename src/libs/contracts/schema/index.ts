@@ -8,3 +8,4 @@ export * from './order.schema';
 export * from './orderItem.schema';
 export * from './detail.schema';
 export * from './booking.schema';
+export * from './department.schema';

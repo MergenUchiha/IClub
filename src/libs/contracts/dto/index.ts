@@ -8,3 +8,4 @@ export * from './order.dto';
 export * from './orderItem.dto';
 export * from './detail.dto';
 export * from './booking.dto';
+export * from './department.dto';
