@@ -105,7 +105,7 @@ export class OrderService {
 
     async cancelOrderByAdmin(orderId: string): Promise<TApiResp<true>> {
         const order = await this.findOrderById(orderId);
-        if (order.status === 'VERIFIED' || order.status === 'COMPLETED') {
+        if (order.status === 'COMPLETED') {
             throw new OrderCancelConflictException();
         }
         await this.prisma.order.update({
@@ -119,11 +119,10 @@ export class OrderService {
 
     async completeOrder(orderId: string): Promise<TApiResp<true>> {
         const order = await this.findOrderById(orderId);
-
         if (
-            order.status === 'VERIFIED' ||
             order.status === 'COMPLETED' ||
-            order.status === 'CANCELLED'
+            order.status === 'CANCELLED' ||
+            order.status === 'PENDING'
         ) {
             throw new OrderCompleteConflictException();
         }
