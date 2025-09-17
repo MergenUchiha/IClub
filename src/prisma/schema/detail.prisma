@@ -5,7 +5,7 @@ model Detail {
 
     userId          String    @db.Uuid  @map("user_id")
     user            User      @relation(fields: [userId],references: [id])
-    bookingId       String    @unique @db.Uuid   @map("booking_id")
+    bookingId       String     @db.Uuid   @map("booking_id")
     booking         Booking   @relation(fields: [bookingId],references: [id],onDelete: Cascade)
     createdAt       DateTime? @default(now()) @map("created_at")
     updatedAt       DateTime? @updatedAt @map("updated_at")

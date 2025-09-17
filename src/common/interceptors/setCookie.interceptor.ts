@@ -16,7 +16,6 @@ export class SetCookieInterceptor implements NestInterceptor {
         return next.handle().pipe(
             map((data) => {
                 if (data && data.response.refreshToken) {
-                    console.log(data.response);
                     response.cookie(
                         'refreshToken',
                         data.response.refreshToken,

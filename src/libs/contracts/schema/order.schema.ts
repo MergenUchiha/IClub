@@ -13,13 +13,15 @@ export const OrderCreateRequestSchema = z.object({
 
 export const OrderUpdateRequestSchema = z.object({
     description: z.string().optional(),
-    status: z.enum(['PENDING', 'VERIFIED', 'CANCELLED']).optional(),
+    status: z
+        .enum(['PENDING', 'VERIFIED', 'CANCELLED', 'COMPLETED'])
+        .optional(),
 });
 
 export const OrderResponseSchema = z.object({
     id: z.string().uuid(),
     orderNumber: z.number(),
-    status: z.enum(['PENDING', 'VERIFIED', 'CANCELLED']),
+    status: z.enum(['PENDING', 'VERIFIED', 'CANCELLED', 'COMPLETED']),
     description: z.string().optional(),
     totalPrice: z.number().positive(),
     user: UserResponseSchema,

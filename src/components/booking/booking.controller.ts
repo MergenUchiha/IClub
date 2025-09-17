@@ -35,6 +35,7 @@ import { CurrentUser } from 'src/common/decorators/currentUser.decorator';
 import { UserTokenDto } from '../token/dto/userToken.dto';
 import { GetMyBookingOperation } from './decorator/getMyBookingOperation.decorator';
 import { GetBookingByDateOperation } from './decorator/getBookingByDateOperation.decorator';
+import { DeleteBookingDetailByAdminOperation } from './decorator/deleteBookingDetailByAdminOperation.decorator';
 
 @ApiTags('Bookings')
 @ApiBearerAuth()
@@ -122,6 +123,15 @@ export class BookingController {
     @HttpCode(HttpStatus.OK)
     @Delete(':bookingId/details/:detailId')
     async deleteBookingDetail(
+        @Param('detailId') detailId: string,
+    ): Promise<TApiResp<true>> {
+        return this.bookingService.deleteBookingDetail(detailId);
+    }
+
+    @DeleteBookingDetailByAdminOperation()
+    @HttpCode(HttpStatus.OK)
+    @Delete('admin/:bookingId/details/:detailId')
+    async deleteBookingDetailByAdmin(
         @Param('detailId') detailId: string,
     ): Promise<TApiResp<true>> {
         return this.bookingService.deleteBookingDetail(detailId);

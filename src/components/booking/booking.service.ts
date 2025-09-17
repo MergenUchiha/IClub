@@ -5,12 +5,12 @@ import {
     BookingsResponseSchema,
     CreateBookingDto,
     DetailResponseSchema,
-    DetailsResponseSchema,
     GetBookingByDateDto,
+    MyDetailsResponseSchema,
     TApiBookingResponse,
     TApiBookingsResponse,
     TApiDetailResponse,
-    TApiDetailsResponse,
+    TApiMyDetailsResponse,
     UpdateBookingDetailDto,
 } from 'src/libs/contracts';
 import {
@@ -104,7 +104,7 @@ export class BookingService {
         });
         const updatedBooking = await this.prisma.booking.findUnique({
             where: { id: bookingId },
-            include: { details: true },
+            include: { details: { include: { user: true } } },
         });
 
         const parsed = BookingResponseSchema.parse(updatedBooking);
@@ -136,12 +136,14 @@ export class BookingService {
     async getAllBookings(): Promise<TApiResp<TApiBookingsResponse>> {
         const bookings = await this.prisma.booking.findMany({
             include: { details: { include: { user: true } } },
+            orderBy: { bookingDate: 'desc' },
         });
         const parsed = BookingsResponseSchema.parse(bookings);
-
+        const count = await this.prisma.booking.count();
         return {
             good: true,
             response: parsed,
+            count: count,
         };
     }
 
@@ -162,13 +164,15 @@ export class BookingService {
         };
     }
 
-    async getMyBooking(userId: string): Promise<TApiResp<TApiDetailsResponse>> {
+    async getMyBooking(
+        userId: string,
+    ): Promise<TApiResp<TApiMyDetailsResponse>> {
         await this.findUserById(userId);
         const bookingDetails = await this.prisma.detail.findMany({
             where: { userId: userId },
-            include: { booking: true },
+            include: { booking: true, user: true },
         });
-        const parsed = DetailsResponseSchema.parse(bookingDetails);
+        const parsed = MyDetailsResponseSchema.parse(bookingDetails);
         return { good: true, response: parsed };
     }
 
