@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "detail" ALTER COLUMN "group" SET DATA TYPE VARCHAR(4);

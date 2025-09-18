@@ -8,11 +8,13 @@ export type Lesson = z.infer<typeof Lesson>;
 export const DetailAddRequestSchema = z.object({
     tv: z.boolean(),
     lesson: Lesson,
+    group: z.string(),
 });
 
 export const DetailUpdateRequestSchema = z.object({
     tv: z.boolean().optional(),
     lesson: Lesson.optional(),
+    group: z.string().optional(),
 });
 
 export const DetailResponseSchema = z.object({
@@ -22,6 +24,7 @@ export const DetailResponseSchema = z.object({
     userId: z.string().uuid(),
     bookingId: z.string().uuid(),
     user: UserResponseSchema,
+    group: z.string(),
     createdAt: z.date(),
     updatedAt: z.date(),
 });
@@ -46,6 +49,7 @@ export const MyDetailResponseSchema = z.object({
     tv: z.boolean(),
     userId: z.string().uuid(),
     bookingId: z.string().uuid(),
+    group: z.string(),
     booking: GetMyDetailBookingResponseSchema,
     user: UserResponseSchema,
     createdAt: z.date(),
