@@ -2,6 +2,7 @@ model Detail {
     id              String    @id @default(uuid()) @db.Uuid
     lesson          Lesson   
     tv              Boolean   @db.Boolean  @default(false)
+    group           String?    @db.VarChar(4)
 
     userId          String    @db.Uuid  @map("user_id")
     user            User      @relation(fields: [userId],references: [id])

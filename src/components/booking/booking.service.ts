@@ -64,6 +64,7 @@ export class BookingService {
                         lesson: dto.details.lesson,
                         tv: dto.details.tv,
                         userId: userId,
+                        group: dto.details.group,
                     },
                 },
             },
@@ -100,6 +101,7 @@ export class BookingService {
                 lesson: dto.lesson,
                 userId: userId,
                 tv: dto.tv,
+                group: dto.group,
             },
         });
         const updatedBooking = await this.prisma.booking.findUnique({
@@ -124,6 +126,7 @@ export class BookingService {
             data: {
                 tv: dto.tv,
                 lesson: dto.lesson,
+                group: dto.group,
             },
         });
         const parsed = DetailResponseSchema.parse(detail);
