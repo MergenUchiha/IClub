@@ -252,6 +252,14 @@ Order ─── OrderItem
 - `fastify-file-interceptor` pulls in `multer@1.4.5-lts.1`, which has open
   advisories. Replacing it with `@fastify/multipart` directly would remove
   that transitive dependency.
+- `@nestjs/swagger` is capped below 11.4.3. That release restricted the
+  package `exports` field, and `nestjs-zod@4` reaches into
+  `@nestjs/swagger/dist/services/schema-object-factory`, so the application
+  fails to boot with a newer one. Lifting the cap means upgrading to
+  `nestjs-zod@5`, which changes the DTO API.
+- `uuid` is listed as a dependency although nothing in `src` imports it:
+  `fastify-file-interceptor` requires it at runtime without declaring it,
+  and the application does not start without it. Do not remove it.
 - The refresh token is returned in the login response body as well as in the
   cookie. Dropping it from the body is the stricter option and is waiting on
   the client to stop reading it there.
