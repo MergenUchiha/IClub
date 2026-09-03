@@ -22,7 +22,7 @@ export const OrderResponseSchema = z.object({
     id: z.string().uuid(),
     orderNumber: z.number(),
     status: z.enum(['PENDING', 'VERIFIED', 'CANCELLED', 'COMPLETED']),
-    description: z.string().optional(),
+    description: z.string().nullable(),
     totalPrice: z.number().positive(),
     user: UserResponseSchema,
     orderItems: OrderItemsResponseSchema.nonempty(),

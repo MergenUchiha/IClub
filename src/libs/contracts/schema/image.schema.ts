@@ -16,7 +16,8 @@ export const ImageResponseSchema = z.object({
     mimeType: z.string(),
     size: z.string(),
     createdAt: z.date(),
-    productId: z.string().optional(),
+    // Nullable in the database: an image can exist without a product.
+    productId: z.string().nullable(),
 });
 export const ImagesResponseSchema = z.array(ImageResponseSchema);
 
