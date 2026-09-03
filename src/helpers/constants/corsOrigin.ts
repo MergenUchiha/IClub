@@ -32,7 +32,10 @@ export function getCorsOptions(
                 return callback(null, true);
             }
 
-            return callback(new Error('Not allowed by CORS'), false);
+            // Answering with an error turns every cross-origin request into
+            // a 500. Withholding the header is what CORS actually calls for:
+            // the browser then refuses to hand the response to the page.
+            return callback(null, false);
         },
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],

@@ -9,7 +9,8 @@ import { FastifyReply } from 'fastify';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+// Fastify counts Max-Age in seconds; Express counted milliseconds.
+const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
 
 /**
  * Stores the refresh token in an httpOnly cookie, which is where
@@ -37,7 +38,7 @@ export class SetCookieInterceptor implements NestInterceptor {
                 if (!refreshToken) return;
 
                 reply.setCookie('refreshToken', refreshToken, {
-                    maxAge: THIRTY_DAYS_MS,
+                    maxAge: THIRTY_DAYS_IN_SECONDS,
                     httpOnly: true,
                     path: '/',
                     sameSite: 'strict',
