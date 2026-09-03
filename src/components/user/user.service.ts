@@ -103,6 +103,10 @@ export class UserService {
             where: { id: userId },
             data: { isBanned: true },
         });
+        // The ban lives in the access token, so a token issued before it keeps
+        // working until it expires. Dropping the refresh token means the
+        // session cannot be renewed past that point.
+        await this.prisma.token.deleteMany({ where: { userId } });
         return {
             good: true,
         };
