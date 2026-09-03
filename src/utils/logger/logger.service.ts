@@ -38,21 +38,6 @@ export class LoggerService {
             ],
         });
 
-        // this.logger.add(
-        //     new WinstonTelegram({
-        //         token: configService.getOrThrow<string>(
-        //             'LOGGER_TELEGRAM_BOT_TOKEN',
-        //         ),
-        //         chatId: configService.getOrThrow<number>(
-        //             'LOGGER_TELEGRAM_CHAT_ID',
-        //         ),
-        //         level: 'debug',
-        //         parseMode: 'MarkdownV2',
-        //         silent: true,
-        //         handleExceptions: true,
-        //     }),
-        // );
-
         if (environment === 'production' || environment === 'test') {
             if (!existsSync(this.logsDir)) {
                 mkdirSync(this.logsDir, { recursive: true });

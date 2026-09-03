@@ -173,7 +173,9 @@ Product images are stored on disk under `uploads/` and served from
 | PATCH | `/orders/admin/:id/complete` | admin |
 
 An order moves through `PENDING → VERIFIED → COMPLETED`, or to `CANCELLED`.
-A member may cancel only while the order is still `PENDING`.
+A member may cancel only while the order is still `PENDING`. Item prices are
+taken from the catalogue, not from the request body, so the total cannot be
+influenced by the client.
 
 ### Bookings
 
@@ -235,7 +237,11 @@ Order ─── OrderItem
 
 ## Known limitations
 
-- There are no automated tests yet; the endpoints have been exercised by hand.
+- There are no automated tests, and this revision has not been run: the
+  changes were reviewed statically only.
+- `GET /bookings` returns every booking ever made, without pagination.
+- `User.department` is free text even though a `Department` table exists;
+  there is no foreign key between them.
 - `fastify-file-interceptor` pulls in `multer@1.4.5-lts.1`, which has open
   advisories. Replacing it with `@fastify/multipart` directly would remove
   that transitive dependency.
