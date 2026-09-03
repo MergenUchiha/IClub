@@ -16,10 +16,9 @@
         ]
     },
     "builder": {
-        "default": "swc",
-        "typeCheck": true,
+        "type": "swc",
         "options": {
-            "swcrcPath": ".swcrc"
+            "typeCheck": true
         }
     }
 }
