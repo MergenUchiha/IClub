@@ -5,7 +5,6 @@ import {
     CategoryResponseSchema,
     CreateCategoryDto,
     PageDto,
-    // PageDto,
     TApiCategoriesResponse,
     TApiCategoryResponse,
     UpdateCategoryDto,
@@ -41,15 +40,17 @@ export class CategoryService {
     async getCategories(
         query: PageDto,
     ): Promise<TApiResp<TApiCategoriesResponse>> {
-        const { page = 1, take = 5, q = '' } = query;
+        const { page = 1, take = 5, q = '', order = 'asc' } = query;
+        const where = { title: { contains: q } };
         const categories = await this.prisma.category.findMany({
-            where: { title: { contains: q } },
-            orderBy: { title: 'asc' },
+            where,
+            orderBy: { title: order },
             take,
             skip: (page - 1) * take,
         });
+        const count = await this.prisma.category.count({ where });
         const parsed = CategoriesResponseSchema.parse(categories);
-        return { good: true, response: parsed };
+        return { good: true, response: parsed, count };
     }
 
     async getOneCategory(
@@ -73,7 +74,7 @@ export class CategoryService {
         dto: UpdateCategoryDto,
     ): Promise<TApiResp<TApiCategoryResponse>> {
         await this.findCategoryById(categoryId);
-        await this.isTitleExist(dto.title);
+        await this.isTitleExist(dto.title, categoryId);
         const category = await this.prisma.category.update({
             where: { id: categoryId },
             data: { title: dto.title },
@@ -143,11 +144,16 @@ export class CategoryService {
         return category;
     }
 
-    private async isTitleExist(title: string) {
+    /**
+     * `ownerId` is the category being renamed, if any: keeping its own title
+     * is not a conflict, and rejecting it made every update that did not
+     * change the title fail.
+     */
+    private async isTitleExist(title: string, ownerId?: string) {
         const category = await this.prisma.category.findUnique({
             where: { title: title },
         });
-        if (category) {
+        if (category && category.id !== ownerId) {
             throw new CategoryNameAlreadyExistsException();
         }
     }
