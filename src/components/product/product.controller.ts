@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
     Body,
     Controller,
@@ -28,9 +29,13 @@ import { UpdateProductOperation } from './decorator/updateProductOperation.decor
 import { DeleteProductOperation } from './decorator/deleteProductOperation.decorator';
 import { UploadProductImageOperation } from './decorator/uploadProductImageOperation.decorator';
 import { DeleteProductImageOperation } from './decorator/deleteProductImageOperation.decorator';
-import { PUBLIC } from 'src/common/decorators/isPublic.decorator';
+import { ADMIN } from 'src/common/decorators/isAdmin.decorator';
 
-@PUBLIC()
+// The catalogue is readable by anyone; every write is an admin action.
+// The whole controller used to be @PUBLIC(), which left create, update,
+// delete and image upload open to unauthenticated callers.
+@ApiBearerAuth()
+@ADMIN()
 @Controller('product')
 export class ProductController {
     constructor(private productService: ProductService) {}

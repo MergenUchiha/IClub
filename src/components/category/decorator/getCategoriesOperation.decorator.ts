@@ -1,9 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
+import { PUBLIC } from 'src/common/decorators/isPublic.decorator';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CategoriesResponseDto } from 'src/libs/contracts';
 
 export function GetCategoriesOperation() {
     return applyDecorators(
+        PUBLIC(),
         ApiOperation({
             summary: 'Get a list of categories',
             description:
