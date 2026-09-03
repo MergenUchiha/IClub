@@ -5,7 +5,7 @@ model Detail {
     group           String?    @db.VarChar(4)
 
     userId          String    @db.Uuid  @map("user_id")
-    user            User      @relation(fields: [userId],references: [id])
+    user            User      @relation(fields: [userId],references: [id],onDelete: Cascade)
     bookingId       String     @db.Uuid   @map("booking_id")
     booking         Booking   @relation(fields: [bookingId],references: [id],onDelete: Cascade)
     createdAt       DateTime? @default(now()) @map("created_at")
