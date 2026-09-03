@@ -5,50 +5,55 @@ import {
     HttpException,
     HttpStatus,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SentryExceptionCaptured } from '@sentry/nestjs';
-import { Request, Response } from 'express';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import { LoggerService } from '../logger/logger.service';
 import { CustomHttpExceptionResponse } from './httpExceptionResponse.interface';
 
-interface CustomRequest extends Request {
-    currentUser?: any;
-    files?: Express.Multer.File[];
+interface RequestWithUser extends FastifyRequest {
+    currentUser?: { id: string };
 }
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-    constructor(private logger: LoggerService) {}
+    constructor(
+        private logger: LoggerService,
+        private configService: ConfigService,
+    ) {}
 
     @SentryExceptionCaptured()
-    async catch(exception: any, host: ArgumentsHost): Promise<void> {
+    async catch(exception: unknown, host: ArgumentsHost): Promise<void> {
         const ctx = host.switchToHttp();
-        const response = ctx.getResponse<Response>();
-        const request = ctx.getRequest<CustomRequest>();
+        const reply = ctx.getResponse<FastifyReply>();
+        const request = ctx.getRequest<RequestWithUser>();
+
         let status: HttpStatus;
-        let errorMessage: string | undefined;
+        let errorMessage: string;
 
         if (exception instanceof HttpException) {
             status = exception.getStatus();
-            const errorResponse = exception.getResponse() as {
-                message?: string | string[];
-            };
+            const response = exception.getResponse() as
+                | string
+                | { message?: string | string[] };
 
-            if (
-                typeof errorResponse === 'object' &&
-                'message' in errorResponse
-            ) {
-                errorMessage = Array.isArray(errorResponse.message)
-                    ? errorResponse.message.join(', ')
-                    : errorResponse.message;
+            if (typeof response === 'string') {
+                errorMessage = response;
+            } else if (Array.isArray(response.message)) {
+                errorMessage = response.message.join(', ');
             } else {
-                errorMessage = `${exception.message}`;
+                errorMessage = response.message ?? exception.message;
             }
         } else {
-            errorMessage =
-                exception instanceof Error
-                    ? exception.message
-                    : 'Internal server error';
             status = HttpStatus.INTERNAL_SERVER_ERROR;
+            // An unhandled error can carry query fragments or connection
+            // details in its message, so clients only ever see a generic one.
+            errorMessage =
+                this.configService.get<string>('NODE_ENV') === 'production'
+                    ? 'Internal server error'
+                    : exception instanceof Error
+                      ? exception.message
+                      : 'Internal server error';
         }
 
         const errorResponse = this.getErrorResponse(
@@ -61,13 +66,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
         this.logError(errorResponse, request, errorStack);
 
-        response.status(status).send(errorResponse);
+        await reply.status(status).send(errorResponse);
     }
 
     private getErrorResponse = (
         status: HttpStatus,
-        errorMessage: string | undefined,
-        request: Request,
+        errorMessage: string,
+        request: FastifyRequest,
     ): CustomHttpExceptionResponse => ({
         statusCode: status,
         message: errorMessage,
@@ -78,37 +83,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     private logError = (
         errorResponse: CustomHttpExceptionResponse,
-        request: CustomRequest,
+        request: RequestWithUser,
         errorStack: string,
     ) => {
         const { statusCode, message } = errorResponse;
-        const { method, originalUrl } = request;
-
-        let host: string | undefined;
         const realIpHeader = request.headers['x-real-ip'];
-
-        if (Array.isArray(realIpHeader)) {
-            host = realIpHeader[0];
-        } else {
-            host = realIpHeader ?? 'localhost';
-        }
-
-        const logDetails = {
-            host,
-            statusCode,
-            method,
-            url: originalUrl,
-            user: JSON.stringify(
-                request.currentUser ?? 'Not signed in',
-                null,
-                2,
-            ),
-            errorStack,
-        };
+        const host = Array.isArray(realIpHeader)
+            ? realIpHeader[0]
+            : (realIpHeader ?? request.ip);
 
         this.logger.error(
-            `Ошибка: ${message} | Статус: ${statusCode} | Метод: ${method} | URL: ${originalUrl}`,
-            JSON.stringify(logDetails),
+            `${request.method} ${request.url} -> ${statusCode}: ${message}`,
+            errorStack,
+            JSON.stringify({ host, user: request.currentUser?.id ?? null }),
         );
     };
 }

@@ -24,7 +24,6 @@ export class AuthGuard implements CanActivate {
     canActivate(context: ExecutionContext) {
         if (this.isPublicRoute(context)) return true;
         const req = context.switchToHttp().getRequest();
-        this.logger.log(`Checking authorization for request: ${req.url}`);
 
         try {
             const token = this.extractToken(req);
@@ -50,7 +49,10 @@ export class AuthGuard implements CanActivate {
                 return true;
             }
             return false;
-        } catch (e) {
+        } catch (error) {
+            // A banned user gets the specific answer; anything else is
+            // reported as a plain authentication failure.
+            if (error instanceof UserBannedException) throw error;
             return this.handleUnauthorized('User unauthorized!');
         }
     }
@@ -78,21 +80,15 @@ export class AuthGuard implements CanActivate {
 
     private extractToken(req: any): string | null {
         const authHeader = req.headers.authorization;
-        if (!authHeader) {
-            this.logger.error('Authorization header not found');
-            return null;
-        }
+        if (!authHeader) return null;
 
         const [bearer, token] = authHeader.split(' ');
-        if (bearer !== 'Bearer' || !token) {
-            this.logger.error('Invalid token format');
-            return null;
-        }
+        if (bearer !== 'Bearer' || !token) return null;
         return token;
     }
 
     private handleUnauthorized(message: string): boolean {
-        this.logger.error(message);
+        this.logger.debug(message);
         throw new UnauthorizedException(message);
     }
 }

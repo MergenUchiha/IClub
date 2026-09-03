@@ -4,34 +4,44 @@ import {
     Injectable,
     NestInterceptor,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { FastifyReply } from 'fastify';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Stores the refresh token in an httpOnly cookie, which is where
+ * `GET /auth/*_/refresh` reads it from.
+ *
+ * The token is still returned in the response body as well, because existing
+ * clients read it from there. Dropping it from the body would be the stricter
+ * choice and is worth doing once the clients are updated.
+ */
 @Injectable()
 export class SetCookieInterceptor implements NestInterceptor {
+    constructor(private readonly configService: ConfigService) {}
+
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-        const ctx = context.switchToHttp();
-        const response = ctx.getResponse();
+        const reply = context.switchToHttp().getResponse<FastifyReply>();
+        const isProduction =
+            this.configService.get<string>('NODE_ENV') === 'production';
 
         return next.handle().pipe(
-            map((data) => {
-                if (data && data.response.refreshToken) {
-                    response.cookie(
-                        'refreshToken',
-                        data.response.refreshToken,
-                        {
-                            maxAge: 30 * 24 * 60 * 60 * 1000,
-                            httpOnly: true,
-                            path: '/',
-                            sameSite: 'Lax',
-                            secure: true,
-                        },
-                    );
+            tap((data) => {
+                const refreshToken = data?.response?.refreshToken;
+                if (!refreshToken) return;
 
-                    const { refreshToken, ...responseBody } = data;
-                    return responseBody;
-                }
-                return data;
+                reply.setCookie('refreshToken', refreshToken, {
+                    maxAge: THIRTY_DAYS_MS,
+                    httpOnly: true,
+                    path: '/',
+                    sameSite: 'strict',
+                    // Over plain http (local development) a secure cookie is
+                    // silently dropped by the browser.
+                    secure: isProduction,
+                });
             }),
         );
     }

@@ -1,33 +1,22 @@
 import {
+    CallHandler,
+    ExecutionContext,
     Injectable,
     NestInterceptor,
-    ExecutionContext,
-    CallHandler,
 } from '@nestjs/common';
+import { FastifyReply } from 'fastify';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
+/** Drops the refresh-token cookie once the token has been revoked. */
 @Injectable()
 export class ClearCookieInterceptor implements NestInterceptor {
-    constructor() {}
-
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-        const ctx = context.switchToHttp();
-        const response = ctx.getResponse();
+        const reply = context.switchToHttp().getResponse<FastifyReply>();
 
         return next.handle().pipe(
-            tap(async (data) => {
-                if (data && data.refreshToken) {
-                    try {
-                        response.clearCookie('refreshToken');
-                    } catch (error) {
-                        console.error('Error storing token in Redis:', error);
-                    }
-                } else {
-                    console.warn(
-                        'Authorization header is missing or malformed',
-                    );
-                }
+            tap(() => {
+                reply.clearCookie('refreshToken', { path: '/' });
             }),
         );
     }
