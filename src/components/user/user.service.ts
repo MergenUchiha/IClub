@@ -41,13 +41,16 @@ export class UserService {
 
     async getUsers(query: PageDto): Promise<TApiResp<TApiUsersResponse>> {
         const { page = 1, take = 5, q = '', order = 'desc' } = query;
+        const where = { phoneNumber: { contains: q } };
         const users = await this.prisma.user.findMany({
-            where: { phoneNumber: { contains: q } },
+            where,
             orderBy: { createdAt: order },
             take,
             skip: (page - 1) * take,
         });
-        const count = await this.prisma.user.count();
+        // Counting without the filter made the page count wrong as soon as a
+        // search term was supplied.
+        const count = await this.prisma.user.count({ where });
         const parsed = UsersResponseSchema.parse(users);
         return { good: true, response: parsed, count: count };
     }

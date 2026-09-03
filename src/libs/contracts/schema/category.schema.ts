@@ -3,11 +3,11 @@ import { ProductsResponseSchema } from './product.schema';
 import { createZodDto } from 'nestjs-zod';
 
 export const CategoryCreateRequestSchema = z.object({
-    title: z.string(),
+    title: z.string().min(1).max(30),
 });
 
 export const CategoryUpdateRequestSchema = z.object({
-    title: z.string(),
+    title: z.string().min(1).max(30),
 });
 
 export const CategoryResponseSchema = z.object({

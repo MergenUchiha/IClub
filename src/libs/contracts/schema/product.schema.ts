@@ -3,16 +3,18 @@ import { ImageResponseSchema } from './image.schema';
 import { createZodDto } from 'nestjs-zod';
 
 export const ProductCreateRequestSchema = z.object({
-    name: z.string(),
-    description: z.string(),
-    price: z.number().positive(),
+    name: z.string().min(1).max(25),
+    description: z.string().min(1),
+    // The column is an integer, so a fractional price would only fail once it
+    // reached the database.
+    price: z.number().int().positive(),
     categoryId: z.string().uuid(),
 });
 
 export const ProductUpdateRequestSchema = z.object({
-    name: z.string().optional(),
-    description: z.string().optional(),
-    price: z.number().positive().optional(),
+    name: z.string().min(1).max(25).optional(),
+    description: z.string().min(1).optional(),
+    price: z.number().int().positive().optional(),
     categoryId: z.string().uuid().optional(),
 });
 
@@ -20,7 +22,7 @@ export const ProductResponseSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
     description: z.string(),
-    price: z.number().positive(),
+    price: z.number().int().positive(),
     categoryId: z.string().uuid(),
     image: ImageResponseSchema.nullable().optional(),
 });

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ITransformedFile } from 'src/common/interfaces/fileTransform.interface';
 import {
     CreateImageDto,
@@ -24,6 +24,8 @@ import { z } from 'zod';
 
 @Injectable()
 export class ProductService {
+    private readonly logger = new Logger(ProductService.name);
+
     constructor(
         private prisma: PrismaService,
         private mediaService: MediaService,
@@ -62,14 +64,17 @@ export class ProductService {
 
     async getProducts(query: PageDto): Promise<TApiResp<TApiProductsResponse>> {
         const { page = 1, take = 5, q = '', order = 'desc' } = query;
+        const where = { name: { contains: q, mode: 'insensitive' as const } };
         const products = await this.prisma.product.findMany({
-            where: { name: { contains: q } },
+            where,
             orderBy: { name: order },
             take,
             skip: (page - 1) * take,
             include: { image: true },
         });
-        const count = await this.prisma.product.count();
+        // Counting without the filter made the page count wrong as soon as a
+        // search term was supplied.
+        const count = await this.prisma.product.count({ where });
         const parsed = ProductsResponseSchema.parse(products);
         return { good: true, response: parsed, count: count };
     }
@@ -137,12 +142,15 @@ export class ProductService {
         file: ITransformedFile,
     ): Promise<TApiResp<TApiImageResponse>> {
         file.productId = productId;
-        // Валидация файла
-        try {
-            this.fileSchema.parse(file);
-        } catch (error) {
-            console.error('Validation failed:', error);
-            throw new BadRequestException(error);
+
+        const validated = this.fileSchema.safeParse(file);
+        if (!validated.success) {
+            // The raw ZodError describes internal field names and constraints;
+            // the client only needs to know the upload was rejected.
+            this.logger.warn(
+                `Rejected upload for product ${productId}: ${validated.error.message}`,
+            );
+            throw new BadRequestException('Invalid image file');
         }
 
         const mediaData: CreateImageDto = {
@@ -166,14 +174,10 @@ export class ProductService {
     }
 
     async deleteMedia(productId: string): Promise<TApiResp<true>> {
-        console.log(`Удаление медиа с идентификатором продукта: ${productId}`);
         const file = await this.prisma.image.findFirst({
             where: { productId: productId },
         });
         if (!file) {
-            console.warn(
-                `Медиа с идентификатором продукта ${productId} не найдено!`,
-            );
             throw new ImageNotFoundException();
         }
         await this.mediaService.deleteMedia(file.id);

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
     CreateOrderDto,
@@ -22,6 +22,8 @@ import { TApiResp } from 'src/libs/contracts/interface';
 
 @Injectable()
 export class OrderService {
+    private readonly logger = new Logger(OrderService.name);
+
     constructor(private prisma: PrismaService) {}
 
     async placeAnOrder(
@@ -29,20 +31,24 @@ export class OrderService {
         dto: CreateOrderDto,
     ): Promise<TApiResp<TApiOrderResponse>> {
         const user = await this.findUserById(currentUser.id);
+
+        if (dto.orderItems.length === 0) {
+            throw new OrderConflictException();
+        }
+
+        const total = dto.orderItems.reduce(
+            (acc, item) => acc + item.price * item.quantity,
+            0,
+        );
+
+        // Only the transaction itself is guarded. Wrapping the whole method
+        // used to turn every failure - a bad product id, a database outage -
+        // into the same "order conflict" response.
         try {
-            const total = dto.orderItems.reduce(
-                (acc, item) => acc + item.price * item.quantity,
-                0,
-            );
-
-            if (dto.orderItems.length === 0) {
-                throw new OrderConflictException();
-            }
-
             return await this.prisma.$transaction(async (prisma) => {
                 const createdOrder = await prisma.order.create({
                     data: {
-                        status: 'PENDING', // Use dto.status or default to PENDING
+                        status: 'PENDING',
                         totalPrice: total,
                         description: dto.description,
                         userId: user.id,
@@ -73,7 +79,11 @@ export class OrderService {
                 const parsed = OrderResponseSchema.parse(order);
                 return { good: true, response: parsed };
             });
-        } catch {
+        } catch (error) {
+            this.logger.error(
+                `Failed to place an order for user ${user.id}`,
+                error instanceof Error ? error.stack : String(error),
+            );
             throw new OrderConflictException();
         }
     }
@@ -219,8 +229,9 @@ export class OrderService {
     ): Promise<TApiResp<TApiOrdersResponse>> {
         const { page = 1, take = 5, order = 'desc' } = query;
         const user = await this.findUserById(currentUser.id);
+        const where = { userId: user.id };
         const orders = await this.prisma.order.findMany({
-            where: { userId: user.id },
+            where,
             orderBy: { createdAt: order },
             take,
             skip: (page - 1) * take,
@@ -233,7 +244,9 @@ export class OrderService {
                 user: true,
             },
         });
-        const count = await this.prisma.order.count();
+        // Used to return the total number of orders in the system, which made
+        // the page count wrong for every user.
+        const count = await this.prisma.order.count({ where });
         const parsed = OrdersResponseSchema.parse(orders);
         return {
             good: true,
