@@ -11,6 +11,7 @@ import { IS_USER_KEY } from '../decorators/isUser.decorator';
 import { TokenService } from 'src/components/token/token.service';
 import { IS_ADMIN_KEY } from '../decorators/isAdmin.decorator';
 import { UserBannedException } from 'src/libs/contracts/exceptions';
+import { AuthenticatedRequest } from '../interfaces/authenticatedRequest.interface';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -23,7 +24,7 @@ export class AuthGuard implements CanActivate {
 
     canActivate(context: ExecutionContext) {
         if (this.isPublicRoute(context)) return true;
-        const req = context.switchToHttp().getRequest();
+        const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
         try {
             const token = this.extractToken(req);
@@ -78,7 +79,7 @@ export class AuthGuard implements CanActivate {
         ]);
     }
 
-    private extractToken(req: any): string | null {
+    private extractToken(req: AuthenticatedRequest): string | null {
         const authHeader = req.headers.authorization;
         if (!authHeader) return null;
 

@@ -17,9 +17,10 @@ export class PrismaHealthIndicator extends HealthIndicator {
             await this.prismaService.$queryRaw`SELECT 1`;
             return this.getStatus(key, true);
         } catch (error) {
+            const reason = error instanceof Error ? error.message : 'unknown';
             throw new HealthCheckError(
                 'Prisma check failed',
-                this.getStatus(key, false),
+                this.getStatus(key, false, { reason }),
             );
         }
     }

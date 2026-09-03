@@ -23,13 +23,16 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 export class SetCookieInterceptor implements NestInterceptor {
     constructor(private readonly configService: ConfigService) {}
 
-    intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    intercept(
+        context: ExecutionContext,
+        next: CallHandler,
+    ): Observable<unknown> {
         const reply = context.switchToHttp().getResponse<FastifyReply>();
         const isProduction =
             this.configService.get<string>('NODE_ENV') === 'production';
 
         return next.handle().pipe(
-            tap((data) => {
+            tap((data: { response?: { refreshToken?: string } }) => {
                 const refreshToken = data?.response?.refreshToken;
                 if (!refreshToken) return;
 

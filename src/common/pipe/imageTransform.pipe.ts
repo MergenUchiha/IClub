@@ -8,7 +8,7 @@ export class ImageTransformer implements PipeTransform<Express.Multer.File> {
     private readonly logger = new Logger(ImageTransformer.name);
     constructor(private configService: ConfigService) {}
 
-    async transform(file: Express.Multer.File): Promise<ITransformedFile> {
+    transform(file: Express.Multer.File): ITransformedFile {
         if (!file.path || !file.destination) {
             this.logger.error(
                 `File path or destination missing: ${JSON.stringify(file)}`,
@@ -16,7 +16,7 @@ export class ImageTransformer implements PipeTransform<Express.Multer.File> {
             throw new BadRequestException('Image not provided');
         }
 
-        const backendUrl = this.configService.getOrThrow('BACKEND_URL');
+        const backendUrl = this.configService.getOrThrow<string>('BACKEND_URL');
         this.logger.log(`File saved to: ${file.path}`);
 
         return {

@@ -11,7 +11,10 @@ import { tap } from 'rxjs/operators';
 /** Drops the refresh-token cookie once the token has been revoked. */
 @Injectable()
 export class ClearCookieInterceptor implements NestInterceptor {
-    intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    intercept(
+        context: ExecutionContext,
+        next: CallHandler,
+    ): Observable<unknown> {
         const reply = context.switchToHttp().getResponse<FastifyReply>();
 
         return next.handle().pipe(

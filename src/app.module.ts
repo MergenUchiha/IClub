@@ -61,9 +61,8 @@ import { DepartmentModule } from './components/department/department.module';
                 const redis = new Redis({
                     host: configService.getOrThrow<string>('REDIS_HOST'),
                     port: configService.getOrThrow<number>('REDIS_PORT'),
-                    password: configService.getOrThrow<string>(
-                        'REDIS_PASSWORD',
-                    ),
+                    password:
+                        configService.getOrThrow<string>('REDIS_PASSWORD'),
                 });
 
                 return {

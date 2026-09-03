@@ -5,16 +5,14 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Observable } from 'rxjs';
+import { FastifyRequest } from 'fastify';
 
 @Injectable()
 export class HealthCheckAuthGuard implements CanActivate {
     constructor(private configService: ConfigService) {}
-    canActivate(
-        context: ExecutionContext,
-    ): boolean | Promise<boolean> | Observable<boolean> {
-        const request = context.switchToHttp().getRequest();
-        const authToken = request.headers['authorization'];
+    canActivate(context: ExecutionContext): boolean {
+        const request = context.switchToHttp().getRequest<FastifyRequest>();
+        const authToken = request.headers.authorization;
 
         if (
             authToken ===

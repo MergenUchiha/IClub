@@ -88,5 +88,4 @@ export class AdminAuthService {
         }
         return admin;
     }
-
 }

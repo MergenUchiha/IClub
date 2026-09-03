@@ -34,8 +34,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         if (exception instanceof HttpException) {
             status = exception.getStatus();
             const response = exception.getResponse() as
-                | string
-                | { message?: string | string[] };
+                string | { message?: string | string[] };
 
             if (typeof response === 'string') {
                 errorMessage = response;

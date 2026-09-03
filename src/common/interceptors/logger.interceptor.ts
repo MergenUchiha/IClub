@@ -13,7 +13,10 @@ import { LoggerService } from 'src/utils/logger/logger.service';
 export class LoggingInterceptor implements NestInterceptor {
     constructor(private readonly logger: LoggerService) {}
 
-    intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    intercept(
+        context: ExecutionContext,
+        next: CallHandler,
+    ): Observable<unknown> {
         const request = context.switchToHttp().getRequest<FastifyRequest>();
         // Fastify exposes `url`; `originalUrl` is an Express field and was
         // logged as undefined on every single request.

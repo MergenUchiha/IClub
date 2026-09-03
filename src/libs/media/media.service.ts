@@ -10,9 +10,7 @@ export class MediaService {
     constructor(private readonly prismaService: PrismaService) {}
 
     async deleteMedias(fileIds: string[]) {
-        this.logger.log(
-            `Deleting media: ${fileIds.join(', ')}`,
-        );
+        this.logger.log(`Deleting media: ${fileIds.join(', ')}`);
         const files = await this.prismaService.image.findMany({
             where: { id: { in: fileIds } },
         });
