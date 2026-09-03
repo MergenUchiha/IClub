@@ -42,8 +42,9 @@ full_backup.sql
 *.env
 .production.env
 .development.env
-docker-compose.yaml
-Dockerfile
+
+# Local copy of the Redis config, which carries a real password
+redis.conf
 
 *.drawio
 

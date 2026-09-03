@@ -1,0 +1,23 @@
+# Redis configuration used by the rate limiter in production.
+# Copy to redis.conf, set a real password, and never commit the copy.
+
+# --- Persistence ---
+save 300 1
+save 60 10000
+
+appendonly yes
+appendfilename "appendonly.aof"
+appendfsync everysec
+
+# --- Memory ---
+maxmemory 3gb
+maxmemory-policy allkeys-lru
+
+# --- Security ---
+# Must match REDIS_PASSWORD in the application .env file.
+requirepass CHANGE_ME
+
+# Only bind to loopback. If the application runs on another host, put Redis
+# behind a private network or a TLS tunnel instead of opening 0.0.0.0.
+protected-mode yes
+bind 127.0.0.1
