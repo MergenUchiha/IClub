@@ -4,17 +4,17 @@ import { ProductForOrderResponse } from './product.schema';
 
 export const OrderItemCreateRequestSchema = z.object({
     productId: z.string().uuid(),
-    quantity: z.number().positive(),
-    price: z.number().positive(),
+    // The column is an integer.
+    quantity: z.number().int().positive(),
 });
 
 export const OrderItemUpdateRequestSchema = z.object({
-    quantity: z.number().positive().optional(),
+    quantity: z.number().int().positive().optional(),
 });
 
 export const OrderItemResponseSchema = z.object({
     id: z.string().uuid(),
-    quantity: z.number().positive(),
+    quantity: z.number().int().positive(),
     price: z.number().positive(),
     product: ProductForOrderResponse.optional(),
 });

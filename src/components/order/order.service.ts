@@ -17,6 +17,7 @@ import {
     OrderCancelConflictException,
     OrderUpdateConflictException,
     OrderCompleteConflictException,
+    ProductNotFoundException,
 } from 'src/libs/contracts/exceptions';
 import { TApiResp } from 'src/libs/contracts/interface';
 
@@ -36,8 +37,23 @@ export class OrderService {
             throw new OrderConflictException();
         }
 
+        // Prices come from the catalogue, never from the request. The client
+        // used to send them, so anyone could order any product at any price
+        // they named and the total was computed from those numbers.
+        const productIds = [
+            ...new Set(dto.orderItems.map((item) => item.productId)),
+        ];
+        const products = await this.prisma.product.findMany({
+            where: { id: { in: productIds } },
+            select: { id: true, price: true },
+        });
+        if (products.length !== productIds.length) {
+            throw new ProductNotFoundException();
+        }
+        const priceOf = new Map(products.map((p) => [p.id, p.price]));
+
         const total = dto.orderItems.reduce(
-            (acc, item) => acc + item.price * item.quantity,
+            (acc, item) => acc + priceOf.get(item.productId)! * item.quantity,
             0,
         );
 
@@ -60,7 +76,7 @@ export class OrderService {
                         prisma.orderItem.create({
                             data: {
                                 orderId: createdOrder.id,
-                                price: item.price,
+                                price: priceOf.get(item.productId)!,
                                 quantity: item.quantity,
                                 productId: item.productId,
                             },
