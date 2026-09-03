@@ -244,8 +244,8 @@ Order ─── OrderItem
 
 ## Known limitations
 
-- There are no automated tests, and this revision has not been run: the
-  changes were reviewed statically only.
+- There are no automated tests. The endpoints were exercised by hand against
+  a live database, in both development and production mode.
 - `GET /bookings` returns every booking ever made, without pagination.
 - `User.department` is free text even though a `Department` table exists;
   there is no foreign key between them.
