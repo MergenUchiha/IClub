@@ -1,169 +1,244 @@
-<<<<<<< HEAD
-# P2p bot
+# IClub API
 
+Backend for a student club: members book the club room for a lesson slot,
+order from the café menu, and administrators manage the catalogue, the
+members and the orders.
 
+Built with NestJS 11 on Fastify, PostgreSQL through Prisma, and Zod for both
+request validation and response serialisation.
+
+## Stack
+
+| Area | Choice |
+|---|---|
+| Runtime | Node.js 20+, TypeScript 5 |
+| Framework | NestJS 11 with the Fastify adapter |
+| Database | PostgreSQL 16, Prisma ORM (multi-file schema) |
+| Validation | Zod via `nestjs-zod` — one schema per contract, reused for Swagger |
+| Auth | JWT access/refresh pairs, separate secrets for members and admins |
+| Passwords | argon2 |
+| Rate limiting | `@nestjs/throttler`, backed by Redis in production |
+| Logging | Winston |
+| Errors | Sentry (optional, enabled by setting a DSN) |
+| Docs | Swagger at `/docs`, behind a flag |
+
+## Layout
+
+```
+src/
+├── components/        feature modules (auth, user, booking, order, product, …)
+│   └── <feature>/
+│       ├── *.controller.ts
+│       ├── *.service.ts
+│       └── decorator/     one file per endpoint: role + Swagger metadata
+├── common/            guards, interceptors, pipes, param decorators
+├── config/            environment schema and validation
+├── libs/
+│   ├── contracts/     Zod schemas, DTOs and the shared exception catalogue
+│   └── media/         file storage for product images
+├── prisma/            schema folder, migrations, health indicator
+├── utils/             logger, health check, exception filter
+└── helpers/           seeds, hashing, constants
+```
+
+Each endpoint carries its role in a decorator next to its Swagger
+description, for example `USER()` or `ADMIN()`; `PUBLIC()` opts a route out of
+authentication. The global `AuthGuard` reads those and validates the bearer
+token against the matching secret.
 
 ## Getting started
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/Davut7/p2p-bot.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/Davut7/p2p-bot/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
-=======
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
+Requirements: Node.js 20 or newer, PostgreSQL 16, and — only for a production
+run — Redis.
 
 ```bash
-$ npm install
+git clone https://github.com/MergenUchiha/IClub.git
+cd IClub
+npm install
+
+cp .env.example .env          # then fill in the values
+npm run prisma:generate
+npm run prisma:migrate        # applies migrations to the database
+npm run seed                  # loads the department reference list
+
+npm run start:dev             # http://localhost:5005/api
 ```
 
-## Running the app
+A database is enough to boot: Redis is only required when
+`NODE_ENV=production`, where it stores the rate-limiting counters.
+
+Postgres in a container, if you would rather not install it locally:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+docker run -d --name iclub-postgres \
+  -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=iclub \
+  -p 127.0.0.1:5432:5432 postgres:16-alpine
 ```
 
-## Test
+### Production
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run build
+npm run prisma:deploy
+NODE_ENV=production npm run start:prod
 ```
 
-## Support
+## Configuration
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Every variable the application reads is listed in
+[`.env.example`](.env.example) with a comment. The configuration is validated
+by a Zod schema at startup, so a missing or malformed value stops the process
+with a message naming the variable instead of failing somewhere deeper.
 
-## Stay in touch
+The ones worth calling out:
 
--   Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
--   Website - [https://nestjs.com](https://nestjs.com/)
--   Twitter - [@nestframework](https://twitter.com/nestframework)
+| Variable | Notes |
+|---|---|
+| `IS_SWAGGER_ENABLED` | Serves `/docs`. Keep it `false` in production — it publishes every route and payload shape. |
+| `CORS_ORIGINS` | Comma-separated allow-list. Required in production; in development an empty value permits any `localhost` port. |
+| `JWT_*_TIME` | Lifetimes in the zeit/ms format (`15m`, `1h`, `30d`). |
+| `DEFAULT_ADMIN_*` | The first admin, created on first boot if the username is not taken. Change the password afterwards. |
+| `HEALTH_CHECK_TOKEN` | `GET /api/health` expects it as a bearer token. |
+| `REDIS_*` | Required only when `NODE_ENV=production`. |
+| `SENTRY_DSN` | Leave empty to disable error reporting. |
 
-## License
+`redis.conf.example` is the matching Redis configuration; copy it to
+`redis.conf`, set the password, and keep that copy out of version control.
 
-Nest is [MIT licensed](LICENSE).
->>>>>>> 1c567b0 (first commit)
+## Authentication
+
+Two separate realms with their own secrets: members sign in with a phone
+number, administrators with a username. Both receive an access token and a
+refresh token.
+
+- The access token goes in `Authorization: Bearer <token>`.
+- The refresh token is also set as an httpOnly cookie, which is what
+  `GET /auth/*/refresh` reads.
+- Refresh tokens are stored as SHA-256 digests, one row per subject, and are
+  replaced on every refresh. A logout deletes the row.
+
+## Endpoints
+
+All paths are prefixed with `/api`.
+
+### Auth
+
+| Method | Path | Access |
+|---|---|---|
+| POST | `/auth/user/login` | public |
+| GET | `/auth/user/refresh` | refresh cookie |
+| POST | `/auth/user/logout` | member |
+| GET | `/auth/user/me` | member |
+| POST | `/auth/admin/login` | public |
+| GET | `/auth/admin/refresh` | refresh cookie |
+| POST | `/auth/admin/logout` | admin |
+
+### Members
+
+| Method | Path | Access |
+|---|---|---|
+| POST | `/user` | admin |
+| GET | `/user` | admin |
+| GET | `/user/:userId` | admin |
+| PATCH | `/user/:userId` | admin |
+| PATCH | `/user/:userId/ban` | admin |
+| DELETE | `/user/:userId` | admin |
+| GET | `/department` | admin |
+
+### Catalogue
+
+| Method | Path | Access |
+|---|---|---|
+| GET | `/category`, `/category/:categoryId` | public |
+| POST · PATCH · DELETE | `/category`, `/category/:categoryId` | admin |
+| GET | `/product`, `/product/:productId` | public |
+| POST · PATCH · DELETE | `/product`, `/product/:productId` | admin |
+| POST | `/product/:productId/image` | admin |
+| DELETE | `/product/:productId/image` | admin |
+
+Product images are stored on disk under `uploads/` and served from
+`/uploads/<file>`. Uploads are limited to 5 MB and to JPEG, PNG and GIF.
+
+### Orders
+
+| Method | Path | Access |
+|---|---|---|
+| POST | `/orders` | member |
+| GET | `/orders/my` | member |
+| GET | `/orders/my/:orderId` | member |
+| PATCH | `/orders/:id/cancel` | member, own order only |
+| GET | `/orders`, `/orders/:id` | admin |
+| PATCH | `/orders/:id` | admin |
+| PATCH | `/orders/admin/:id/cancel` | admin |
+| PATCH | `/orders/admin/:id/complete` | admin |
+
+An order moves through `PENDING → VERIFIED → COMPLETED`, or to `CANCELLED`.
+A member may cancel only while the order is still `PENDING`.
+
+### Bookings
+
+| Method | Path | Access |
+|---|---|---|
+| POST | `/bookings/date` | member — the booking for a given date |
+| POST | `/bookings` | member — open a date and take a slot |
+| POST | `/bookings/:bookingId/details` | member — take a slot on an open date |
+| PATCH | `/bookings/:bookingId/details/:detailId` | member, own slot only |
+| DELETE | `/bookings/:bookingId/details/:detailId` | member, own slot only |
+| GET | `/bookings` | member |
+| GET | `/bookings/details/my` | member |
+| GET | `/bookings/admin`, `/bookings/admin/:bookingId` | admin |
+| DELETE | `/bookings/admin/:bookingId/details/:detailId` | admin |
+
+A date holds up to three lesson slots (`LESSON1`–`LESSON3`), each of which can
+be booked with or without the TV. Listing bookings shows who took which slot
+by name only — phone numbers and student ids stay private.
+
+### Health
+
+`GET /api/health` reports whether the instance can reach its database. It
+expects `Authorization: Bearer $HEALTH_CHECK_TOKEN` and is excluded from
+Swagger.
+
+## Data model
+
+```
+Admin ─┬─ Token                     Booking ─── Detail ─── User
+User  ─┴─ Token                                   │
+                                                lesson, tv, group
+Category ─── Product ─── Image
+                 │
+Order ─── OrderItem
+  └─ User
+```
+
+- `User` — members and teachers; teachers have no `studentId`.
+- `Token` — one refresh-token digest per member or admin.
+- `Booking` — one row per date; `Detail` — one row per taken lesson slot.
+- `Order` / `OrderItem` — café orders with a status and a computed total.
+- `Category` / `Product` / `Image` — the menu; a product has at most one image.
+- `Department` — reference list loaded by the seed script.
+
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `npm run start:dev` | Watch mode |
+| `npm run start:prod` | Runs the compiled `dist/main.js` |
+| `npm run build` | Compiles to `dist/` |
+| `npm run lint` | ESLint with type-aware rules, autofixing |
+| `npm run format` | Prettier |
+| `npm run prisma:migrate` | Creates and applies a migration |
+| `npm run prisma:deploy` | Applies existing migrations (production) |
+| `npm run prisma:studio` | Opens Prisma Studio |
+| `npm run seed` | Loads the department reference list |
+| `npm test` | Jest |
+
+## Known limitations
+
+- There are no automated tests yet; the endpoints have been exercised by hand.
+- `fastify-file-interceptor` pulls in `multer@1.4.5-lts.1`, which has open
+  advisories. Replacing it with `@fastify/multipart` directly would remove
+  that transitive dependency.
+- The refresh token is returned in the login response body as well as in the
+  cookie. Dropping it from the body is the stricter option and is waiting on
+  the client to stop reading it there.

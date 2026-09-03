@@ -22,7 +22,8 @@ export class ImageTransformer implements PipeTransform<Express.Multer.File> {
         return {
             fileName: file.filename,
             originalName: file.originalname,
-            filePath: `${backendUrl}/uploads/${file.filename}`, // Относительный путь для базы данных
+            // Absolute URL, so the value can be served to clients as-is.
+            filePath: `${backendUrl}/uploads/${file.filename}`,
             mimeType: file.mimetype,
             size: file.size.toString(),
         };

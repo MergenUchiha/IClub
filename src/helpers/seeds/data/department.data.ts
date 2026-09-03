@@ -1,8 +1,5 @@
 import { CreateDepartmentDto } from 'src/libs/contracts';
 
-export interface DepartmentData {
-    title: string;
-}
 export const departments: CreateDepartmentDto[] = [
     {
         title: 'Chemical Technologies',

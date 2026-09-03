@@ -99,12 +99,12 @@ export class CategoryService {
             },
         });
 
-        // Проверяем, существует ли категория
+        // Make sure the category exists before touching anything.
         if (!category) {
             throw new CategoryNotFoundException();
         }
 
-        // Собираем ID изображений для удаления
+        // Collect the image ids belonging to the products in this category.
         const imageIdsToDelete = category.products
             .filter(
                 (product): product is Product & { image: Image } =>
@@ -112,19 +112,20 @@ export class CategoryService {
             )
             .map((product) => product.image.id);
 
-        // Удаляем изображения, если они есть
+        // Remove the images first: they live on disk as well as in the
+        // database.
         if (imageIdsToDelete.length > 0) {
             await this.mediaService.deleteMedias(imageIdsToDelete);
         }
 
-        // Удаляем продукты, если они есть
+        // Then the products.
         if (category.products.length > 0) {
             await this.prisma.product.deleteMany({
                 where: { categoryId },
             });
         }
 
-        // Удаляем категорию
+        // And finally the category itself.
         await this.prisma.category.delete({
             where: { id: categoryId },
         });

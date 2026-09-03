@@ -1,16 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { departments } from './data/department.data';
 
-const prisma = new PrismaClient();
+/**
+ * Departments are a fixed reference list, so the table is replaced wholesale
+ * rather than merged.
+ */
+export async function seedDepartment(prisma: PrismaClient) {
+    await prisma.department.deleteMany();
+    await prisma.department.createMany({ data: departments });
 
-export async function seedDepartment() {
-    for (const department of departments) {
-        await prisma.department.create({
-            data: {
-                title: department.title,
-            },
-        });
-    }
-
-    console.log('Departments seeded successfully!');
+    console.log(`Seeded ${departments.length} departments`);
 }

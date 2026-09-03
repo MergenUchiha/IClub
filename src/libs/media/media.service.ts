@@ -11,79 +11,79 @@ export class MediaService {
 
     async deleteMedias(fileIds: string[]) {
         this.logger.log(
-            `Удаление медиа с идентификаторами: ${fileIds.join(', ')}`,
+            `Deleting media: ${fileIds.join(', ')}`,
         );
         const files = await this.prismaService.image.findMany({
             where: { id: { in: fileIds } },
         });
         if (!files.length) {
-            this.logger.warn('Некоторые файлы не найдены!');
+            this.logger.warn('Some of the requested files do not exist');
             throw new NotFoundException('Some files are not found!');
         }
 
-        // Удаляем физические файлы из папки uploads
+        // Remove the files from disk before dropping the rows.
         for (const file of files) {
-            // Извлекаем относительный путь из полного URL
+            // filePath is stored as an absolute URL; take the part
+            // after /uploads/.
             const relativePath = file.filePath.split('/uploads/')[1];
             if (!relativePath) {
-                this.logger.warn(`Некорректный filePath: ${file.filePath}`);
+                this.logger.warn(
+                    `Unexpected filePath, skipping: ${file.filePath}`,
+                );
                 continue;
             }
             const filePath = join(process.cwd(), 'uploads', relativePath);
             try {
                 await fs.unlink(filePath);
-                this.logger.log(`Файл удален: ${filePath}`);
+                this.logger.log(`Deleted file ${filePath}`);
             } catch {
-                this.logger.warn(`Не удалось удалить файл ${filePath}`);
-                // Продолжаем, чтобы не прерывать удаление других файлов
+                this.logger.warn(`Could not delete file ${filePath}`);
+                // Keep going: a missing file must not block the rest.
             }
         }
 
-        // Удаляем записи из базы данных
+        // Drop the rows once the files are gone.
         await this.prismaService.image.deleteMany({
             where: { id: { in: fileIds } },
         });
     }
 
     async deleteMedia(mediaId: string) {
-        this.logger.log(`Удаление медиа с идентификатором: ${mediaId}`);
+        this.logger.log(`Deleting media ${mediaId}`);
         const file = await this.prismaService.image.findFirst({
             where: { id: mediaId },
         });
         if (!file) {
-            this.logger.warn(`Медиа с идентификатором ${mediaId} не найдено!`);
+            this.logger.warn(`Media ${mediaId} not found`);
             throw new NotFoundException('Media not found!');
         }
 
-        // Извлекаем относительный путь из полного URL
         const relativePath = file.filePath.split('/uploads/')[1];
-        console.log(relativePath);
         if (!relativePath) {
-            this.logger.warn(`Некорректный filePath: ${file.filePath}`);
+            this.logger.warn(`Unexpected filePath, skipping: ${file.filePath}`);
         } else {
             const filePath = join(process.cwd(), 'uploads', relativePath);
             try {
                 await fs.unlink(filePath);
-                this.logger.log(`Файл удален: ${filePath}`);
+                this.logger.log(`Deleted file ${filePath}`);
             } catch {
-                this.logger.warn(`Не удалось удалить файл ${filePath}`);
-                // Продолжаем, чтобы не прерывать удаление записи
+                this.logger.warn(`Could not delete file ${filePath}`);
+                // Keep going: the row must be removed either way.
             }
         }
 
-        // Удаляем запись из базы данных
         await this.prismaService.image.delete({
             where: { id: mediaId },
         });
     }
 
     async getOneMedia(mediaId: string) {
-        this.logger.log(`Получение медиа с идентификатором: ${mediaId}`);
+        this.logger.log(`Fetching media ${mediaId}`);
         const media = await this.prismaService.image.findUnique({
             where: { id: mediaId },
         });
         if (!media) {
-            this.logger.warn(`Медиа с идентификатором ${mediaId} не найдено!`);
+            this.logger.warn(`Media ${mediaId} not found`);
             throw new NotFoundException('Media not found!');
         }
         return media;
