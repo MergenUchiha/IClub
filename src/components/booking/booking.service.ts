@@ -89,11 +89,12 @@ export class BookingService {
         if (!booking) {
             throw new BookingNotFoundException();
         }
-        booking.details.map((detail) => {
-            if (detail.lesson === dto.lesson && detail.tv === dto.tv) {
-                throw new LessonExistingConflictException();
-            }
-        });
+        const slotTaken = booking.details.some(
+            (detail) => detail.lesson === dto.lesson && detail.tv === dto.tv,
+        );
+        if (slotTaken) {
+            throw new LessonExistingConflictException();
+        }
 
         await this.prisma.detail.create({
             data: {
@@ -116,11 +117,17 @@ export class BookingService {
         };
     }
 
+    /**
+     * `ownerId` is passed for member requests and omitted for admin ones.
+     * Without it any signed-in member could edit somebody else's booking by
+     * guessing a detail id.
+     */
     async updateBookingDetail(
         detailId: string,
         dto: UpdateBookingDetailDto,
+        ownerId?: string,
     ): Promise<TApiResp<TApiDetailResponse>> {
-        await this.findDetailById(detailId);
+        await this.findDetailById(detailId, ownerId);
         const detail = await this.prisma.detail.update({
             where: { id: detailId },
             data: {
@@ -179,8 +186,12 @@ export class BookingService {
         return { good: true, response: parsed };
     }
 
-    async deleteBookingDetail(detailId: string): Promise<TApiResp<true>> {
-        await this.findDetailById(detailId);
+    /** See `updateBookingDetail` for the meaning of `ownerId`. */
+    async deleteBookingDetail(
+        detailId: string,
+        ownerId?: string,
+    ): Promise<TApiResp<true>> {
+        await this.findDetailById(detailId, ownerId);
         await this.prisma.detail.delete({
             where: { id: detailId },
         });
@@ -189,11 +200,16 @@ export class BookingService {
         };
     }
 
-    private async findDetailById(detailId: string) {
+    private async findDetailById(detailId: string, ownerId?: string) {
         const detail = await this.prisma.detail.findUnique({
             where: { id: detailId },
         });
         if (!detail) {
+            throw new BookingDetailNotFoundException();
+        }
+        // Answering "not found" rather than "forbidden" keeps the endpoint
+        // from confirming that somebody else's detail id exists.
+        if (ownerId && detail.userId !== ownerId) {
             throw new BookingDetailNotFoundException();
         }
         return detail;
@@ -215,15 +231,5 @@ export class BookingService {
         if (!user) {
             throw new UserNotFoundException();
         }
-    }
-
-    private async findBookingById(bookingId: string) {
-        const booking = await this.prisma.booking.findUnique({
-            where: { id: bookingId },
-        });
-        if (!booking) {
-            throw new BookingNotFoundException();
-        }
-        return booking;
     }
 }

@@ -83,8 +83,9 @@ export class BookingController {
     async updateBookingDetail(
         @Param('detailId') detailId: string,
         @Body() dto: UpdateBookingDetailDto,
+        @CurrentUser() user: UserTokenDto,
     ): Promise<TApiResp<TApiDetailResponse>> {
-        return this.bookingService.updateBookingDetail(detailId, dto);
+        return this.bookingService.updateBookingDetail(detailId, dto, user.id);
     }
 
     @GetAllBookingsForAdminOperation()
@@ -124,8 +125,9 @@ export class BookingController {
     @Delete(':bookingId/details/:detailId')
     async deleteBookingDetail(
         @Param('detailId') detailId: string,
+        @CurrentUser() user: UserTokenDto,
     ): Promise<TApiResp<true>> {
-        return this.bookingService.deleteBookingDetail(detailId);
+        return this.bookingService.deleteBookingDetail(detailId, user.id);
     }
 
     @DeleteBookingDetailByAdminOperation()

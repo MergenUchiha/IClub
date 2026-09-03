@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
-import { UserResponseSchema } from './user.schema';
+import { PublicUserSchema, UserResponseSchema } from './user.schema';
 
 export const Lesson = z.enum(['LESSON1', 'LESSON2', 'LESSON3']);
 export type Lesson = z.infer<typeof Lesson>;
@@ -8,13 +8,14 @@ export type Lesson = z.infer<typeof Lesson>;
 export const DetailAddRequestSchema = z.object({
     tv: z.boolean(),
     lesson: Lesson,
-    group: z.string(),
+    // VarChar(4) in the database.
+    group: z.string().max(4),
 });
 
 export const DetailUpdateRequestSchema = z.object({
     tv: z.boolean().optional(),
     lesson: Lesson.optional(),
-    group: z.string().optional(),
+    group: z.string().max(4).optional(),
 });
 
 export const DetailResponseSchema = z.object({
@@ -23,8 +24,9 @@ export const DetailResponseSchema = z.object({
     tv: z.boolean(),
     userId: z.string().uuid(),
     bookingId: z.string().uuid(),
-    user: UserResponseSchema,
-    group: z.string(),
+    user: PublicUserSchema.optional(),
+    // The column is nullable: a booking does not have to name a group.
+    group: z.string().nullable(),
     createdAt: z.date(),
     updatedAt: z.date(),
 });
@@ -49,7 +51,7 @@ export const MyDetailResponseSchema = z.object({
     tv: z.boolean(),
     userId: z.string().uuid(),
     bookingId: z.string().uuid(),
-    group: z.string(),
+    group: z.string().nullable(),
     booking: GetMyDetailBookingResponseSchema,
     user: UserResponseSchema,
     createdAt: z.date(),
