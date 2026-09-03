@@ -1,8 +1,4 @@
-import {
-    BadRequestException,
-    Injectable,
-    UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserTokenDto } from 'src/components/token/dto/userToken.dto';
 import { TokenService } from 'src/components/token/token.service';
 import { verifyHash } from 'src/helpers/providers/generateHash';
@@ -26,10 +22,15 @@ export class UserAuthService {
     async login(
         dto: UserLoginDto,
     ): Promise<TApiResp<TApiUserAuthTokenResponse>> {
-        const user = await this.findUserByPhoneNumber(dto.phoneNumber);
-        const isPasswordValid = await verifyHash(dto.password, user.password);
-        if (!isPasswordValid) {
-            throw new BadRequestException('Password incorrect!');
+        // A wrong phone number and a wrong password produce the same answer,
+        // so the endpoint cannot be used to enumerate accounts.
+        const user = await this.prisma.user.findUnique({
+            where: { phoneNumber: dto.phoneNumber },
+        });
+        const isPasswordValid =
+            user !== null && (await verifyHash(dto.password, user.password));
+        if (!user || !isPasswordValid) {
+            throw new UnauthorizedException('Invalid phone number or password');
         }
         const tokens = this.tokenService.generateTokens({
             ...new UserTokenDto(user),
@@ -57,13 +58,15 @@ export class UserAuthService {
             throw new UnauthorizedException('Refresh token not provided');
         }
 
-        const tokenFromDB = await this.tokenService.findToken(refreshToken);
-        const isTokenValid =
-            this.tokenService.validateRefreshToken(refreshToken);
-        if (!isTokenValid && !tokenFromDB) {
+        // The signature proves the token was issued by us; the database row
+        // proves it has not been rotated away or revoked by a logout.
+        const payload = this.tokenService.validateRefreshToken(refreshToken);
+        const storedToken = await this.tokenService.findToken(refreshToken);
+        if (storedToken.userId !== payload.id) {
             throw new UnauthorizedException('Invalid token!');
         }
-        const user = await this.findUserById(isTokenValid.id);
+
+        const user = await this.findUserById(payload.id);
 
         const tokens = this.tokenService.generateTokens({
             ...new UserTokenDto(user),
@@ -114,13 +117,4 @@ export class UserAuthService {
         return user;
     }
 
-    private async findUserByPhoneNumber(phoneNumber: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { phoneNumber: phoneNumber },
-        });
-        if (!user) {
-            throw new UserNotFoundException();
-        }
-        return user;
-    }
 }

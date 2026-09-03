@@ -1,14 +1,13 @@
-import {
-    Injectable,
-    NotFoundException,
-    UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createHash } from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoggerService } from 'src/utils/logger/logger.service';
-import { UserTokenDto } from './dto/userToken.dto';
 import { AdminTokenDto } from './dto/adminToken.dto';
+import { UserTokenDto } from './dto/userToken.dto';
+
+type TokenPair = { accessToken: string; refreshToken: string };
 
 @Injectable()
 export class TokenService {
@@ -18,265 +17,149 @@ export class TokenService {
         private logger: LoggerService,
     ) {}
 
-    generateTokens(payload: UserTokenDto) {
-        const accessExpiresIn = parseInt(
-            this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-            10,
-        );
+    generateTokens(payload: UserTokenDto): TokenPair {
+        return this.signPair(payload, {
+            accessSecret: 'JWT_ACCESS_SECRET',
+            accessTime: 'JWT_ACCESS_TIME',
+            refreshSecret: 'JWT_REFRESH_SECRET',
+            refreshTime: 'JWT_REFRESH_TIME',
+        });
+    }
 
-        const refreshExpiresIn = parseInt(
-            this.configService.getOrThrow<string>('JWT_REFRESH_TIME'),
-            10,
-        );
+    generateAdminTokens(payload: AdminTokenDto): TokenPair {
+        return this.signPair(payload, {
+            accessSecret: 'JWT_ADMIN_ACCESS_SECRET',
+            accessTime: 'JWT_ADMIN_ACCESS_TIME',
+            refreshSecret: 'JWT_ADMIN_REFRESH_SECRET',
+            refreshTime: 'JWT_ADMIN_REFRESH_TIME',
+        });
+    }
 
-        console.log(isNaN(accessExpiresIn) ? '1h' : accessExpiresIn);
-        const accessToken = jwt.sign(
-            payload,
-            this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-            {
-                expiresIn: isNaN(accessExpiresIn) ? '1h' : accessExpiresIn,
-            },
-        );
+    validateAccessToken(accessToken: string): UserTokenDto {
+        return this.verify(accessToken, 'JWT_ACCESS_SECRET', 'access');
+    }
 
-        const refreshToken = jwt.sign(
-            payload,
-            this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
-            {
-                expiresIn: isNaN(refreshExpiresIn) ? '30d' : refreshExpiresIn,
-            },
-        );
+    validateRefreshToken(refreshToken: string): UserTokenDto {
+        return this.verify(refreshToken, 'JWT_REFRESH_SECRET', 'refresh');
+    }
 
-        this.logger.log(`Generated tokens for user with ID ${payload.id}`);
+    validateAdminAccessToken(accessToken: string): UserTokenDto {
+        return this.verify(accessToken, 'JWT_ADMIN_ACCESS_SECRET', 'access');
+    }
 
-        return {
-            accessToken,
-            refreshToken,
-        };
+    validateAdminRefreshToken(refreshToken: string): UserTokenDto {
+        return this.verify(refreshToken, 'JWT_ADMIN_REFRESH_SECRET', 'refresh');
     }
 
     async saveTokens(userId: string, refreshToken: string) {
-        const user = await this.prismaService.token.findFirst({
+        return this.prismaService.token.upsert({
             where: { userId },
+            update: { refreshToken: hashToken(refreshToken) },
+            create: { userId, refreshToken: hashToken(refreshToken) },
         });
-
-        if (user) {
-            this.logger.log(
-                `Updating refresh token for user with ID ${userId}`,
-            );
-            const updateExistingToken = await this.prismaService.token.update({
-                where: { userId: userId },
-                data: { refreshToken },
-            });
-            return updateExistingToken;
-        }
-
-        this.logger.log(`Saving refresh token for user with ID ${userId}`);
-        const token = this.prismaService.token.create({
-            data: { refreshToken: refreshToken, userId },
-        });
-        return token;
     }
 
-    validateAccessToken(accessToken: string) {
-        try {
-            const token = jwt.verify(
-                accessToken,
-                this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-            );
-
-            this.logger.log(`Validated access token`);
-
-            return token as UserTokenDto;
-        } catch (err: any) {
-            this.logger.error(
-                `Failed to validate access token: ${err.message}`,
-                err.stack,
-                'TokenService',
-            );
-            throw new UnauthorizedException();
-        }
-    }
-
-    validateRefreshToken(refreshToken: string) {
-        try {
-            const token = jwt.verify(
-                refreshToken,
-                this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
-            );
-
-            this.logger.log(`Validated refresh token`);
-
-            return token as UserTokenDto;
-        } catch (err: any) {
-            this.logger.error(
-                `Failed to validate refresh token: ${err.message}`,
-                err.stack,
-                'TokenService',
-            );
-            throw new UnauthorizedException('Invalid token!');
-        }
-    }
-
-    async deleteToken(refreshToken: string) {
-        const token = await this.findToken(refreshToken);
-
-        if (!token) {
-            throw new NotFoundException('Refresh token not found!');
-        }
-
-        this.logger.log(`Deleting refresh token`);
-        await this.prismaService.token.delete({
-            where: { id: token.id },
+    async saveAdminTokens(adminId: string, refreshToken: string) {
+        return this.prismaService.token.upsert({
+            where: { adminId },
+            update: { refreshToken: hashToken(refreshToken) },
+            create: { adminId, refreshToken: hashToken(refreshToken) },
         });
-        return { message: 'Token deleted successfully.' };
     }
 
     async findToken(refreshToken: string) {
-        const token = await this.prismaService.token.findFirst({
-            where: { refreshToken: refreshToken },
+        const token = await this.prismaService.token.findUnique({
+            where: { refreshToken: hashToken(refreshToken) },
         });
         if (!token) throw new UnauthorizedException('Token not found!');
         return token;
     }
 
     async findTokenByUserId(userId: string) {
-        const token = await this.prismaService.token.findFirst({
-            where: { userId: userId },
-        });
-        if (!token) throw new UnauthorizedException('Token not found!');
-        return token;
-    }
-
-    generateAdminTokens(payload: AdminTokenDto) {
-        const accessExpiresIn = parseInt(
-            this.configService.getOrThrow<string>('JWT_ADMIN_ACCESS_SECRET'),
-            10,
-        );
-
-        const refreshExpiresIn = parseInt(
-            this.configService.getOrThrow<string>('JWT_ADMIN_REFRESH_TIME'),
-            10,
-        );
-
-        console.log(isNaN(accessExpiresIn) ? '1h' : accessExpiresIn);
-        const accessToken = jwt.sign(
-            payload,
-            this.configService.getOrThrow<string>('JWT_ADMIN_ACCESS_SECRET'),
-            {
-                expiresIn: isNaN(accessExpiresIn) ? '1h' : accessExpiresIn,
-            },
-        );
-
-        const refreshToken = jwt.sign(
-            payload,
-            this.configService.getOrThrow<string>('JWT_ADMIN_REFRESH_SECRET'),
-            {
-                expiresIn: isNaN(refreshExpiresIn) ? '30d' : refreshExpiresIn,
-            },
-        );
-
-        this.logger.log(`Generated tokens for user with ID ${payload.id}`);
-
-        return {
-            accessToken,
-            refreshToken,
-        };
-    }
-
-    async saveAdminTokens(adminId: string, refreshToken: string) {
-        const user = await this.prismaService.token.findFirst({
-            where: { adminId },
-        });
-
-        if (user) {
-            this.logger.log(
-                `Updating refresh token for user with ID ${adminId}`,
-            );
-            const updateExistingToken = await this.prismaService.token.update({
-                where: { adminId: adminId },
-                data: { refreshToken },
-            });
-            return updateExistingToken;
-        }
-
-        this.logger.log(`Saving refresh token for user with ID ${adminId}`);
-        const token = this.prismaService.token.create({
-            data: { refreshToken: refreshToken, adminId },
-        });
-        return token;
-    }
-
-    validateAdminAccessToken(accessToken: string) {
-        try {
-            const token = jwt.verify(
-                accessToken,
-                this.configService.getOrThrow<string>(
-                    'JWT_ADMIN_ACCESS_SECRET',
-                ),
-            );
-
-            this.logger.log(`Validated access token`);
-
-            return token as UserTokenDto;
-        } catch (err: any) {
-            this.logger.error(
-                `Failed to validate access token: ${err.message}`,
-                err.stack,
-                'TokenService',
-            );
-            throw new UnauthorizedException();
-        }
-    }
-
-    validateAdminRefreshToken(refreshToken: string) {
-        try {
-            const token = jwt.verify(
-                refreshToken,
-                this.configService.getOrThrow<string>(
-                    'JWT_ADMIN_REFRESH_SECRET',
-                ),
-            );
-
-            this.logger.log(`Validated refresh token`);
-
-            return token as UserTokenDto;
-        } catch (err: any) {
-            this.logger.error(
-                `Failed to validate refresh token: ${err.message}`,
-                err.stack,
-                'TokenService',
-            );
-            throw new UnauthorizedException('Invalid token!');
-        }
-    }
-
-    async deleteAdminToken(refreshToken: string) {
-        const token = await this.findToken(refreshToken);
-
-        if (!token) {
-            throw new NotFoundException('Refresh token not found!');
-        }
-
-        this.logger.log(`Deleting refresh token`);
-        await this.prismaService.token.delete({
-            where: { id: token.id },
-        });
-        return { message: 'Token deleted successfully.' };
-    }
-
-    async findAdminToken(refreshToken: string) {
-        const token = await this.prismaService.token.findFirst({
-            where: { refreshToken: refreshToken },
+        const token = await this.prismaService.token.findUnique({
+            where: { userId },
         });
         if (!token) throw new UnauthorizedException('Token not found!');
         return token;
     }
 
     async findAdminTokenByAdminId(adminId: string) {
-        const token = await this.prismaService.token.findFirst({
-            where: { adminId: adminId },
+        const token = await this.prismaService.token.findUnique({
+            where: { adminId },
         });
         if (!token) throw new UnauthorizedException('Token not found!');
         return token;
     }
+
+    async deleteToken(refreshToken: string) {
+        const token = await this.findToken(refreshToken);
+        await this.prismaService.token.delete({ where: { id: token.id } });
+        return { message: 'Token deleted successfully.' };
+    }
+
+    private signPair(
+        payload: UserTokenDto | AdminTokenDto,
+        keys: {
+            accessSecret: string;
+            accessTime: string;
+            refreshSecret: string;
+            refreshTime: string;
+        },
+    ): TokenPair {
+        const accessToken = jwt.sign(
+            { ...payload },
+            this.configService.getOrThrow<string>(keys.accessSecret),
+            { expiresIn: this.lifetime(keys.accessTime) },
+        );
+
+        const refreshToken = jwt.sign(
+            { ...payload },
+            this.configService.getOrThrow<string>(keys.refreshSecret),
+            { expiresIn: this.lifetime(keys.refreshTime) },
+        );
+
+        this.logger.log(`Generated tokens for subject ${payload.id}`);
+
+        return { accessToken, refreshToken };
+    }
+
+    /**
+     * Lifetimes are configured in the zeit/ms format ('15m', '1d', '30d') and
+     * are handed to jsonwebtoken untouched. Parsing them as integers used to
+     * turn '30d' into 30 seconds.
+     */
+    private lifetime(key: string): jwt.SignOptions['expiresIn'] {
+        return this.configService.getOrThrow<string>(
+            key,
+        ) as jwt.SignOptions['expiresIn'];
+    }
+
+    private verify(
+        token: string,
+        secretKey: string,
+        kind: 'access' | 'refresh',
+    ): UserTokenDto {
+        try {
+            return jwt.verify(
+                token,
+                this.configService.getOrThrow<string>(secretKey),
+            ) as UserTokenDto;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'unknown';
+            this.logger.warn(
+                `Rejected ${kind} token: ${message}`,
+                'TokenService',
+            );
+            throw new UnauthorizedException('Invalid token!');
+        }
+    }
+}
+
+/**
+ * Refresh tokens are stored as digests: a dump of the tokens table is then
+ * not enough to impersonate anybody. Lookups hash the incoming token the
+ * same way, so the unique index still does the work.
+ */
+function hashToken(refreshToken: string): string {
+    return createHash('sha256').update(refreshToken).digest('hex');
 }

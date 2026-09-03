@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Injectable,
     NotFoundException,
     UnauthorizedException,
@@ -21,10 +20,15 @@ export class AdminAuthService {
     async login(
         dto: AdminLoginDto,
     ): Promise<TApiResp<TApiAdminAuthTokenResponse>> {
-        const admin = await this.findAdminByUsername(dto.username);
-        const isPasswordValid = await verifyHash(dto.password, admin.password);
-        if (!isPasswordValid) {
-            throw new BadRequestException('Password incorrect!');
+        // A wrong username and a wrong password produce the same answer, so
+        // the endpoint cannot be used to enumerate accounts.
+        const admin = await this.prisma.admin.findUnique({
+            where: { username: dto.username },
+        });
+        const isPasswordValid =
+            admin !== null && (await verifyHash(dto.password, admin.password));
+        if (!admin || !isPasswordValid) {
+            throw new UnauthorizedException('Invalid username or password');
         }
         const tokens = this.tokenService.generateAdminTokens({
             ...new AdminTokenDto(admin),
@@ -44,14 +48,16 @@ export class AdminAuthService {
             throw new UnauthorizedException('Refresh token not provided');
         }
 
-        const tokenFromDB =
-            await this.tokenService.findAdminToken(refreshToken);
-        const isTokenValid =
+        // The signature proves the token was issued by us; the database row
+        // proves it has not been rotated away or revoked by a logout.
+        const payload =
             this.tokenService.validateAdminRefreshToken(refreshToken);
-        if (!isTokenValid && !tokenFromDB) {
+        const storedToken = await this.tokenService.findToken(refreshToken);
+        if (storedToken.adminId !== payload.id) {
             throw new UnauthorizedException('Invalid token!');
         }
-        const admin = await this.findAdminById(isTokenValid.id);
+
+        const admin = await this.findAdminById(payload.id);
 
         const tokens = this.tokenService.generateAdminTokens({
             ...new AdminTokenDto(admin),
@@ -67,7 +73,7 @@ export class AdminAuthService {
         if (!refreshToken) {
             throw new UnauthorizedException('User unauthorized!');
         }
-        await this.tokenService.deleteAdminToken(refreshToken);
+        await this.tokenService.deleteToken(refreshToken);
         return {
             good: true,
         };
@@ -83,13 +89,4 @@ export class AdminAuthService {
         return admin;
     }
 
-    private async findAdminByUsername(username: string) {
-        const admin = await this.prisma.admin.findUnique({
-            where: { username: username },
-        });
-        if (!admin) {
-            throw new NotFoundException('Admin not found');
-        }
-        return admin;
-    }
 }
