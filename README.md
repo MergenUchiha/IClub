@@ -123,6 +123,10 @@ refresh token.
   `GET /auth/*/refresh` reads.
 - Refresh tokens are stored as SHA-256 digests, one row per subject, and are
   replaced on every refresh. A logout deletes the row.
+- Banning a member deletes their refresh token, so the session cannot be
+  renewed. The ban itself is carried in the access token, so an access token
+  issued before the ban stays valid until it expires — at most
+  `JWT_ACCESS_TIME`.
 
 ## Endpoints
 
@@ -164,7 +168,10 @@ All paths are prefixed with `/api`.
 | DELETE | `/product/:productId/image` | admin |
 
 Product images are stored on disk under `uploads/` and served from
-`/uploads/<file>`. Uploads are limited to 5 MB and to JPEG, PNG and GIF.
+`/uploads/<file>`. Uploads are limited to 5 MB and to JPEG, PNG and GIF,
+checked by both extension and content type; a rejected upload leaves nothing
+on disk. Deleting a product, or the category it belongs to, removes its
+image file along with the row.
 
 ### Orders
 
@@ -180,9 +187,11 @@ Product images are stored on disk under `uploads/` and served from
 | PATCH | `/orders/admin/:id/complete` | admin |
 
 An order moves through `PENDING → VERIFIED → COMPLETED`, or to `CANCELLED`.
-A member may cancel only while the order is still `PENDING`. Item prices are
-taken from the catalogue, not from the request body, so the total cannot be
-influenced by the client.
+A member may cancel their own order while it is `PENDING`; once an admin has
+marked it `VERIFIED` or `COMPLETED` only an admin can act on it. Completing
+an order that is still `PENDING` is refused. Item prices are taken from the
+catalogue, not from the request body, so the total cannot be influenced by
+the client.
 
 ### Bookings
 
@@ -244,7 +253,7 @@ Order ─── OrderItem
 
 ## Known limitations
 
-- There are no automated tests. The endpoints were exercised by hand against
+- There are no automated tests. Every endpoint was exercised by hand against
   a live database, in both development and production mode.
 - `GET /bookings` returns every booking ever made, without pagination.
 - `User.department` is free text even though a `Department` table exists;
