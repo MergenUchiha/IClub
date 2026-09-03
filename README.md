@@ -49,12 +49,19 @@ token against the matching secret.
 ## Getting started
 
 Requirements: Node.js 20 or newer, PostgreSQL 16, and — only for a production
-run — Redis.
+run — Redis. Dependencies are installed with [bun](https://bun.sh); the
+scripts themselves run under npm.
+
+`package.json` pins a single `fastify` version through `overrides`.
+`@nestjs/platform-fastify` depends on an exact version of its own, and
+without the override the tree ends up with two copies: the plugin type
+augmentations then stop merging and the build fails on every
+`app.register(...)` call.
 
 ```bash
 git clone https://github.com/MergenUchiha/IClub.git
 cd IClub
-npm install
+bun install                   # dependencies only; every script below is npm
 
 cp .env.example .env          # then fill in the values
 npm run prisma:generate
