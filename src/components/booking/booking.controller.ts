@@ -6,6 +6,7 @@ import {
     HttpCode,
     HttpStatus,
     Param,
+    ParseUUIDPipe,
     Patch,
     Post,
 } from '@nestjs/common';
@@ -66,7 +67,7 @@ export class BookingController {
     @HttpCode(HttpStatus.OK)
     @Post(':bookingId/details')
     async addToExistingBooking(
-        @Param('bookingId') bookingId: string,
+        @Param('bookingId', ParseUUIDPipe) bookingId: string,
         @Body() dto: AddBookingDetailDto,
         @CurrentUser() user: UserTokenDto,
     ): Promise<TApiResp<TApiBookingResponse>> {
@@ -81,7 +82,7 @@ export class BookingController {
     @HttpCode(HttpStatus.OK)
     @Patch(':bookingId/details/:detailId')
     async updateBookingDetail(
-        @Param('detailId') detailId: string,
+        @Param('detailId', ParseUUIDPipe) detailId: string,
         @Body() dto: UpdateBookingDetailDto,
         @CurrentUser() user: UserTokenDto,
     ): Promise<TApiResp<TApiDetailResponse>> {
@@ -115,7 +116,7 @@ export class BookingController {
     @Get('admin/:bookingId')
     @HttpCode(HttpStatus.OK)
     async getOneBooking(
-        @Param('bookingId') bookingId: string,
+        @Param('bookingId', ParseUUIDPipe) bookingId: string,
     ): Promise<TApiResp<TApiBookingResponse>> {
         return this.bookingService.getOneBooking(bookingId);
     }
@@ -124,7 +125,7 @@ export class BookingController {
     @HttpCode(HttpStatus.OK)
     @Delete(':bookingId/details/:detailId')
     async deleteBookingDetail(
-        @Param('detailId') detailId: string,
+        @Param('detailId', ParseUUIDPipe) detailId: string,
         @CurrentUser() user: UserTokenDto,
     ): Promise<TApiResp<true>> {
         return this.bookingService.deleteBookingDetail(detailId, user.id);
@@ -134,7 +135,7 @@ export class BookingController {
     @HttpCode(HttpStatus.OK)
     @Delete('admin/:bookingId/details/:detailId')
     async deleteBookingDetailByAdmin(
-        @Param('detailId') detailId: string,
+        @Param('detailId', ParseUUIDPipe) detailId: string,
     ): Promise<TApiResp<true>> {
         return this.bookingService.deleteBookingDetail(detailId);
     }

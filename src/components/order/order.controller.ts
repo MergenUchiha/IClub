@@ -3,6 +3,7 @@ import {
     Controller,
     Get,
     Param,
+    ParseUUIDPipe,
     Patch,
     Post,
     Query,
@@ -46,7 +47,7 @@ export class OrderController {
     @Patch(':id/cancel')
     async cancelOrder(
         @CurrentUser() user: UserTokenDto,
-        @Param('id') orderId: string,
+        @Param('id', ParseUUIDPipe) orderId: string,
     ): Promise<TApiResp<true>> {
         if (!user) {
             throw new UnauthorizedException();
@@ -57,21 +58,23 @@ export class OrderController {
     @CancelOrderByAdminOperation()
     @Patch('admin/:id/cancel')
     async cancelOrderByAdmin(
-        @Param('id') orderId: string,
+        @Param('id', ParseUUIDPipe) orderId: string,
     ): Promise<TApiResp<true>> {
         return this.orderService.cancelOrderByAdmin(orderId);
     }
 
     @CompleteOrderOperation()
     @Patch('admin/:id/complete')
-    async completeOrder(@Param('id') orderId: string): Promise<TApiResp<true>> {
+    async completeOrder(
+        @Param('id', ParseUUIDPipe) orderId: string,
+    ): Promise<TApiResp<true>> {
         return this.orderService.completeOrder(orderId);
     }
 
     @UpdateOrderOperation()
     @Patch(':id')
     async updateOrder(
-        @Param('id') orderId: string,
+        @Param('id', ParseUUIDPipe) orderId: string,
         @Body() dto: UpdateOrderDto,
     ): Promise<TApiResp<true>> {
         return this.orderService.updateOrder(orderId, dto);
@@ -80,7 +83,7 @@ export class OrderController {
     @GetOneOrderOperation()
     @Get(':id')
     async getOneOrder(
-        @Param('id') orderId: string,
+        @Param('id', ParseUUIDPipe) orderId: string,
     ): Promise<TApiResp<TApiOrderResponse>> {
         return this.orderService.getOneOrder(orderId);
     }
@@ -89,7 +92,7 @@ export class OrderController {
     @Get('my/:orderId')
     async getMyOneOrder(
         @CurrentUser() user: UserTokenDto,
-        @Param('orderId') orderId: string,
+        @Param('orderId', ParseUUIDPipe) orderId: string,
     ): Promise<TApiResp<TApiOrderResponse>> {
         if (!user) {
             throw new UnauthorizedException();
