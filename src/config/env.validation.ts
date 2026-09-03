@@ -51,7 +51,12 @@ export const envSchema = z
         RATE_LIMIT_TTL: z.coerce.number().int().positive().default(60000),
         RATE_LIMIT_LIMIT: z.coerce.number().int().positive().default(100),
 
-        SENTRY_DSN: z.string().url().optional(),
+        // An empty value disables Sentry. .optional() alone is not enough:
+        // the key is present in .env, it just holds an empty string.
+        SENTRY_DSN: z
+            .union([z.literal(''), z.string().url()])
+            .optional()
+            .transform((value) => value || undefined),
     })
     .superRefine((config, ctx) => {
         if (config.NODE_ENV !== 'production') return;
