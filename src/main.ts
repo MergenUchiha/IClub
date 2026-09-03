@@ -1,7 +1,11 @@
+// Must run before anything else so Sentry can instrument the libraries below.
+import './instrument';
+
 import fastifyCookie from '@fastify/cookie';
-import fastifyCsrfProtection from '@fastify/csrf-protection';
+import fastifyCors from '@fastify/cors';
 import fastifyHelmet from '@fastify/helmet';
-import multipart from '@fastify/multipart';
+import fastifyMultipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
@@ -9,29 +13,26 @@ import {
     FastifyAdapter,
     NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { patchNestJsSwagger, ZodValidationPipe } from 'nestjs-zod';
-import 'reflect-metadata';
-import { AppModule } from './app.module';
-import './instrument';
-import { LoggerService } from './utils/logger/logger.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import fastifyCors from '@fastify/cors';
-import { join } from 'path';
+import { patchNestJsSwagger, ZodValidationPipe } from 'nestjs-zod';
 import { promises as fs } from 'fs';
+import { join } from 'path';
+import 'reflect-metadata';
+
+import { AppModule } from './app.module';
+import { getCorsOptions } from './helpers/constants/corsOrigin';
+import { LoggerService } from './utils/logger/logger.service';
 
 async function bootstrap() {
     patchNestJsSwagger();
 
-    // Создаем папку uploads перед запуском
     const uploadDir = join(process.cwd(), 'uploads');
     await fs.mkdir(uploadDir, { recursive: true });
 
     const app = await NestFactory.create<NestFastifyApplication>(
         AppModule,
         new FastifyAdapter(),
-        {
-            bufferLogs: true,
-        },
+        { bufferLogs: true },
     );
 
     const logger = app.get(LoggerService);
@@ -39,52 +40,57 @@ async function bootstrap() {
 
     const configService = app.get(ConfigService);
     const port = configService.getOrThrow<number>('PORT');
+    const isProduction =
+        configService.getOrThrow<string>('NODE_ENV') === 'production';
 
-    // Настройка Swagger
+    await app.register(fastifyHelmet);
+    await app.register(
+        fastifyCors,
+        getCorsOptions(
+            configService.getOrThrow<string>('CORS_ORIGINS'),
+            isProduction,
+        ),
+    );
+    await app.register(fastifyMultipart);
+    await app.register(fastifyCookie, {
+        secret: configService.getOrThrow<string>('COOKIE_SECRET'),
+    });
+
+    // Uploaded images are served straight from disk. The prefix is lowercase
+    // everywhere: on a case-sensitive filesystem '/Uploads' would 404.
+    await app.register(fastifyStatic, {
+        root: uploadDir,
+        prefix: '/uploads/',
+        decorateReply: false,
+        cacheControl: false,
+    });
+
+    app.useGlobalPipes(new ZodValidationPipe());
+    app.useGlobalInterceptors(
+        new ClassSerializerInterceptor(app.get(Reflector)),
+    );
+
+    app.setGlobalPrefix('api');
+
+    // The API reference exposes every route and payload shape, so it stays
+    // behind an explicit flag that defaults to off.
     if (configService.getOrThrow<boolean>('IS_SWAGGER_ENABLED')) {
         const config = new DocumentBuilder()
             .setTitle('IClub API')
-            .setDescription('API документация для IClub')
+            .setDescription(
+                'Bookings, orders and catalogue for the IClub student club',
+            )
             .setVersion('1.0')
             .addBearerAuth()
             .build();
 
         const document = SwaggerModule.createDocument(app, config);
         SwaggerModule.setup('docs', app, document);
+        logger.log('Swagger UI is served at /docs', 'Bootstrap');
     }
 
-    // Регистрация Fastify плагинов
-    await app.register(fastifyHelmet);
-    await app.register(fastifyCsrfProtection, { cookieOpts: { signed: true } });
-    await app.register(fastifyCors, {
-        credentials: true,
-        origin: '*', // Можно уточнить домен фронтенда в продакшене
-    });
-    await app.register(multipart);
-    await app.register(fastifyCookie, {
-        secret: configService.getOrThrow<string>('COOKIE_SECRET'),
-    });
-
-    // Регистрируем @fastify/static для обслуживания файлов из uploads
-    await app.register(require('@fastify/static'), {
-        root: join(process.cwd(), 'uploads'),
-        prefix: '/uploads',
-        decorateReply: false, // Избегаем конфликтов с NestJS
-        cacheControl: false, // Отключаем кэширование для динамических файлов
-    });
-
-    // Глобальные пайпы и интерсепторы
-    app.useGlobalPipes(new ZodValidationPipe());
-    app.useGlobalInterceptors(
-        new ClassSerializerInterceptor(app.get(Reflector)),
-    );
-
-    // Устанавливаем глобальный префикс API
-    app.setGlobalPrefix('api');
-
-    await app.listen(port, '0.0.0.0', () => {
-        console.log(`Your server is listening on port ${port}`);
-    });
+    await app.listen(port, '0.0.0.0');
+    logger.log(`Server is listening on port ${port}`, 'Bootstrap');
 }
 
-bootstrap();
+void bootstrap();

@@ -1,30 +1,38 @@
 import { FastifyCorsOptions } from '@fastify/cors';
-import { allowedOriginsStage, allowerdOriginsProd } from './allowedOrigins';
 
-export function getCorsOptions(): FastifyCorsOptions {
+/**
+ * The API is called with credentials (the refresh-token cookie), so a
+ * wildcard origin is not an option: browsers reject `*` together with
+ * `credentials: true`, and it would let any site drive an authenticated
+ * session.
+ *
+ * Allowed origins come from the CORS_ORIGINS environment variable as a
+ * comma-separated list. In development an empty list falls back to localhost
+ * on any port.
+ */
+export function getCorsOptions(
+    origins: string,
+    isProduction: boolean,
+): FastifyCorsOptions {
+    const allowList = origins
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean);
+
+    const localhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
     return {
-        origin: async (origin: string | undefined): Promise<boolean> => {
-            if (process.env.NODE_ENV === 'production') {
-                if (
-                    !origin ||
-                    allowerdOriginsProd.some((allowedOrigin) =>
-                        origin.startsWith(allowedOrigin),
-                    )
-                ) {
-                    return true;
-                }
-                throw new Error('Not allowed by CORS');
-            } else {
-                if (
-                    !origin ||
-                    allowedOriginsStage.some((allowedOrigin) =>
-                        origin.startsWith(allowedOrigin),
-                    )
-                ) {
-                    return true;
-                }
-                throw new Error('Not allowed by CORS');
+        origin: (origin, callback) => {
+            // Requests without an Origin header (curl, health probes,
+            // same-origin navigation) are not cross-site requests.
+            if (!origin) return callback(null, true);
+
+            if (allowList.includes(origin)) return callback(null, true);
+            if (!isProduction && localhost.test(origin)) {
+                return callback(null, true);
             }
+
+            return callback(new Error('Not allowed by CORS'), false);
         },
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],

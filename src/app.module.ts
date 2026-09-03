@@ -1,8 +1,13 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { TerminusModule } from '@nestjs/terminus';
 import { SentryModule } from '@sentry/nestjs/setup';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
+import Redis from 'ioredis';
+
 import { AuthGuard } from './common/guards/auth.guard';
 import { LoggingInterceptor } from './common/interceptors/logger.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
@@ -13,72 +18,60 @@ import { HealthModule } from './utils/health/health.module';
 import { LoggerModule } from './utils/logger/logger.module';
 import { MediaModule } from './libs/media/media.module';
 import { TokenModule } from './components/token/token.module';
-import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { CategoryModule } from './components/category/category.module';
 import { ProductModule } from './components/product/product.module';
 import { AdminAuthModule } from './components/auth/admin/admin.auth.module';
 import { DataInitModule } from './components/data-init/data-init.module';
-import { DataInitService } from './components/data-init/data-init.service';
 import { UserModule } from './components/user/user.module';
 import { UserAuthModule } from './components/auth/user/user.auth.module';
 import { OrderModule } from './components/order/order.module';
 import { BookingModule } from './components/booking/booking.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
-import { StaticFileMiddleware } from './common/middlewares/static.middleware';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { DepartmentModule } from './components/department/department.module';
-
-// 🔑 Исправление: импортируем ioredis
-import Redis from 'ioredis';
 
 @Module({
     imports: [
         SentryModule.forRoot(),
         ConfigModule.forRoot({
-            envFilePath: `.env`,
+            envFilePath: '.env',
             validate: validateEnv,
             isGlobal: true,
             cache: true,
+            // Read only the validated configuration, so consumers get the
+            // parsed types instead of the raw strings from process.env.
+            skipProcessEnv: true,
         }),
-        // ⚡ Throttler только для production
-        ...(process.env.NODE_ENV === 'production'
-            ? [
-                  ThrottlerModule.forRootAsync({
-                      imports: [ConfigModule],
-                      inject: [ConfigService],
-                      useFactory: (configService: ConfigService) => {
-                          const redis: Redis = new Redis({
-                              host: configService.getOrThrow<string>(
-                                  'REDIS_HOST',
-                              ),
-                              port: configService.getOrThrow<number>(
-                                  'REDIS_PORT',
-                              ),
-                              password:
-                                  configService.getOrThrow<string>(
-                                      'REDIS_PASSWORD',
-                                  ),
-                          });
+        ThrottlerModule.forRootAsync({
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService) => {
+                const throttlers = [
+                    {
+                        ttl: configService.getOrThrow<number>('RATE_LIMIT_TTL'),
+                        limit: configService.getOrThrow<number>(
+                            'RATE_LIMIT_LIMIT',
+                        ),
+                    },
+                ];
 
-                          return {
-                              throttlers: [
-                                  {
-                                      limit: configService.getOrThrow<number>(
-                                          'RATE_LIMIT_LIMIT',
-                                      ),
-                                      ttl: configService.getOrThrow<number>(
-                                          'RATE_LIMIT_TTL',
-                                      ),
-                                  },
-                              ],
-                              storage: new ThrottlerStorageRedisService(redis),
-                          };
-                      },
-                  }),
-              ]
-            : []),
+                // Outside production the counters stay in memory: a developer
+                // should not need a Redis instance to run the API.
+                if (configService.get<string>('NODE_ENV') !== 'production') {
+                    return { throttlers };
+                }
+
+                const redis = new Redis({
+                    host: configService.getOrThrow<string>('REDIS_HOST'),
+                    port: configService.getOrThrow<number>('REDIS_PORT'),
+                    password: configService.getOrThrow<string>(
+                        'REDIS_PASSWORD',
+                    ),
+                });
+
+                return {
+                    throttlers,
+                    storage: new ThrottlerStorageRedisService(redis),
+                };
+            },
+        }),
         TerminusModule.forRoot(),
         LoggerModule,
         HealthModule,
@@ -93,15 +86,6 @@ import Redis from 'ioredis';
         UserAuthModule,
         OrderModule,
         BookingModule,
-        ServeStaticModule.forRoot({
-            rootPath: join(process.cwd(), 'Uploads'), // Используем process.cwd() для надежности
-            serveRoot: '/Uploads',
-            serveStaticOptions: {
-                redirect: false,
-                index: false,
-                cacheControl: false, // Отключаем кэширование для новых файлов
-            },
-        }),
         DepartmentModule,
     ],
     providers: [
@@ -117,6 +101,12 @@ import Redis from 'ioredis';
             provide: APP_INTERCEPTOR,
             useClass: TimeoutInterceptor,
         },
+        // Rate limiting runs before authentication so that unauthenticated
+        // floods are rejected as early as possible.
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+        },
         {
             provide: APP_GUARD,
             useClass: AuthGuard,
@@ -126,17 +116,6 @@ import Redis from 'ioredis';
             provide: APP_PIPE,
             useClass: ZodValidationPipe,
         },
-        DataInitService,
     ],
 })
-export class AppModule {
-    constructor(private readonly dataInitService: DataInitService) {}
-
-    configure(consumer: MiddlewareConsumer) {
-        consumer.apply(StaticFileMiddleware).forRoutes('/Uploads/*'); // Уточняем маршруты
-    }
-
-    async onModuleInit() {
-        await this.dataInitService.onModuleInit();
-    }
-}
+export class AppModule {}
